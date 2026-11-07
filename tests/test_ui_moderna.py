@@ -21,6 +21,38 @@ class PruebasBuscadores(unittest.TestCase):
         self.assertEqual(normalizar("JIMÉNEZ"), "jimenez")
         self.assertEqual(normalizar("  María  "), "maria")
 
+    def test_buscadores_contextuales(self):
+        from interfaces.ui_moderno import sugerencia_de_busqueda
+        sedes = sugerencia_de_busqueda(["Sedes registradas"])
+        socios = sugerencia_de_busqueda(["Socios registrados"])
+        catalogo = sugerencia_de_busqueda(["Catálogo de libros"])
+        self.assertIn("ID", sedes)
+        self.assertIn("dirección", sedes)
+        self.assertNotIn("DNI", sedes)
+        self.assertIn("documento", socios)
+        self.assertIn("ISBN", catalogo)
+
+    def test_busqueda_de_sedes_muestra_sugerencia_propia(self):
+        pagina = PaginaFalsa()
+        tabla = ft.DataTable(
+            columns=[ft.DataColumn(ft.Text("ID"))],
+            rows=[ft.DataRow(cells=[ft.DataCell(ft.Text("9001"))])]
+        )
+        panel = ft.Column([
+            ft.Text("Sedes registradas"),
+            ft.Row([tabla], scroll=ft.ScrollMode.AUTO)
+        ])
+        modernizar(panel, pagina)
+        campo = next(
+            c for x in panel.controls if isinstance(x, ft.Row)
+            for c in x.controls if isinstance(c, ft.TextField)
+        )
+        self.assertIn("dirección", campo.hint_text)
+        self.assertNotIn("DNI", campo.hint_text)
+        campo.value = "9"
+        campo.on_submit(None)
+        self.assertEqual(len(tabla.rows), 1)
+
     def test_filtra_tabla_por_una_letra_y_numero(self):
         pagina = PaginaFalsa()
         tabla = ft.DataTable(
@@ -168,6 +200,64 @@ class PruebasBuscadores(unittest.TestCase):
         ])
         modernizar(panel, PaginaFalsa())
         self.assertEqual(panel.controls[0].border_radius, 15)
+
+
+class PruebaRangoSemanalSedes(unittest.TestCase):
+    def test_viernes_a_lunes_es_valido_y_se_guarda(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from interfaces.ventana_flet import VentanaFlet
+
+        vista = VentanaFlet.__new__(VentanaFlet)
+        vista._editando_id = None
+        vista._campo_id = SimpleNamespace(value="9002")
+        vista._campo_nombre = SimpleNamespace(value="Biblioteca Horario")
+        vista._campo_direccion = SimpleNamespace(value="Calle 10")
+        vista._campo_telefono = SimpleNamespace(value="3512222")
+        vista._dia_desde = SimpleNamespace(value="Viernes")
+        vista._dia_hasta = SimpleNamespace(value="Lunes")
+        vista._hora_desde = SimpleNamespace(value="09:00")
+        vista._hora_hasta = SimpleNamespace(value="18:00")
+        vista._dias = [
+            "Lunes", "Martes", "Miércoles", "Jueves",
+            "Viernes", "Sábado", "Domingo"
+        ]
+        mensajes = []
+        vista._mostrar_mensaje = lambda titulo, texto: mensajes.append((titulo, texto))
+        vista._mostrar_sedes = lambda: None
+
+        with patch("interfaces.ventana_flet.guardar_sede", return_value=True) as guardar:
+            vista._guardar_sede(None)
+        self.assertEqual(guardar.call_count, 1)
+        self.assertEqual(guardar.call_args.args[0].horarios,
+                         "Viernes a lunes de 09:00 a 18:00")
+        self.assertEqual(mensajes[-1][0], "Operación realizada")
+
+    def test_rechaza_hora_cierre_anterior_a_apertura(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from interfaces.ventana_flet import VentanaFlet
+
+        vista = VentanaFlet.__new__(VentanaFlet)
+        vista._editando_id = None
+        vista._campo_id = SimpleNamespace(value="9002")
+        vista._campo_nombre = SimpleNamespace(value="Biblioteca Horario")
+        vista._campo_direccion = SimpleNamespace(value="Calle 10")
+        vista._campo_telefono = SimpleNamespace(value="3512222")
+        vista._dia_desde = SimpleNamespace(value="Viernes")
+        vista._dia_hasta = SimpleNamespace(value="Lunes")
+        vista._hora_desde = SimpleNamespace(value="18:00")
+        vista._hora_hasta = SimpleNamespace(value="09:00")
+        vista._dias = [
+            "Lunes", "Martes", "Miércoles", "Jueves",
+            "Viernes", "Sábado", "Domingo"
+        ]
+        mensajes = []
+        vista._mostrar_mensaje = lambda titulo, texto: mensajes.append((titulo, texto))
+        with patch("interfaces.ventana_flet.guardar_sede") as guardar:
+            vista._guardar_sede(None)
+        guardar.assert_not_called()
+        self.assertEqual(mensajes[-1][0], "Horario inválido")
 
 
 class PruebaNavegacionCompleta(unittest.TestCase):
