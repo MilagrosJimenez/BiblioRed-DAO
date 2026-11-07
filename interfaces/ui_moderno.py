@@ -17,6 +17,32 @@ CLARO = "#F7FAFE"
 CELESTE = "#DCEFFC"
 
 
+def icono_accion(tipo, descripcion, on_click, disabled=False):
+    """Acción compacta uniforme. El tooltip explica la operación antes de tocarla."""
+    iconos = {
+        "ver": ft.Icons.VISIBILITY_OUTLINED,
+        "editar": ft.Icons.EDIT_OUTLINED,
+        "habilitar": ft.Icons.CHECK_CIRCLE_OUTLINED,
+        "inhabilitar": ft.Icons.BLOCK_OUTLINED,
+        "cancelar": ft.Icons.CANCEL_OUTLINED,
+        "historial": ft.Icons.HISTORY_OUTLINED,
+        "despachar": ft.Icons.LOCAL_SHIPPING_OUTLINED,
+        "recibir": ft.Icons.CHECK_CIRCLE_OUTLINED,
+        "atender": ft.Icons.CHECK_CIRCLE_OUTLINED,
+    }
+    if tipo not in iconos:
+        raise ValueError(f"Acción visual desconocida: {tipo}")
+    return ft.IconButton(
+        icon=iconos[tipo],
+        tooltip=descripcion,
+        icon_size=19,
+        width=36,
+        height=36,
+        on_click=on_click,
+        disabled=disabled,
+    )
+
+
 def normalizar(valor):
     texto = unicodedata.normalize("NFKD", str(valor or ""))
     return "".join(
