@@ -56,16 +56,7 @@ class VentanaCompleta(VentanaFlet):
             border=ft.Border.only(bottom=ft.BorderSide(1, BORDE)),
             content=ft.Row([
                 marca,
-                ft.Row([
-                    ft.Container(
-                        content=ft.Text("SISTEMA OPERATIVO", size=10, color=AZUL,
-                                        weight=ft.FontWeight.BOLD),
-                        bgcolor="#EAF2FF", padding=ft.Padding.symmetric(
-                            horizontal=13, vertical=9),
-                        border_radius=8
-                    ),
-                    self._crear_logo()
-                ], spacing=22)
+                self._crear_logo()
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
         )
 
