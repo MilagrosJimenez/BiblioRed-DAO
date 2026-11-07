@@ -2,6 +2,7 @@
 import flet as ft
 from datos.base_datos import consultar_sedes, consultar_socios
 from servicios.consultas_bibliored_servicio import ConsultasBiblioredServicio
+from interfaces.ui_moderno import modernizar
 
 
 class VentanaConsultas:
@@ -46,10 +47,17 @@ class VentanaConsultas:
         )
 
     def crear_inventario(self):
-        self._codigo = ft.TextField(label="Código del ejemplar", width=290)
+        self._codigo = ft.TextField(
+            label="Código del ejemplar",
+            hint_text="Filtrá escribiendo cualquier parte del código...",
+            width=290,
+            on_change=self._buscar_inventario,
+            on_submit=self._buscar_inventario,
+        )
         self._sede = ft.Dropdown(
             label="Filtrar por sede propietaria o ubicación", width=290,
             value="todas",
+            on_select=self._buscar_inventario,
             options=[ft.DropdownOption(key="todas", text="Todas las sedes")] + [
                 ft.DropdownOption(key=str(s[0]), text=s[1])
                 for s in consultar_sedes()
