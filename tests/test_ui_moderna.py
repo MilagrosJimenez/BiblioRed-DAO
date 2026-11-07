@@ -348,6 +348,57 @@ class PruebasListadosCompactos(unittest.TestCase):
             for x in encontrados
         ))
 
+    def test_tarjetas_sin_expand_en_filas_wrap(self):
+        """Previene el layout gris en las tarjetas de libros y solicitudes."""
+        from unittest.mock import patch
+        from interfaces.ventana_catalogo import VentanaCatalogo
+        from interfaces.ventana_solicitudes import VentanaSolicitudes
+
+        with patch(
+            "interfaces.ventana_catalogo.CatalogoServicio.listar_libros",
+            return_value=[
+                (1, "ISBN01", "Libro de prueba", "Autor", "Editorial", 1, 1)
+            ]
+        ):
+            catalogo = VentanaCatalogo(PaginaFalsa())
+            catalogo.crear_contenido()
+
+        solicitud = (
+            1, "Prueba, Ana", None, "EJ-1", None,
+            "Centro", "Norte", "Interbibliotecario", "Pendiente"
+        )
+        with patch(
+            "interfaces.ventana_solicitudes.PrestamosServicio.listar_socios_habilitados",
+            return_value=[]
+        ), patch(
+            "interfaces.ventana_solicitudes.PrestamosServicio.listar_sedes_activas",
+            return_value=[]
+        ), patch(
+            "interfaces.ventana_solicitudes.PrestamosServicio.listar_ejemplares_disponibles",
+            return_value=[]
+        ), patch(
+            "interfaces.ventana_solicitudes.PrestamosServicio.listar_solicitudes",
+            return_value=[solicitud]
+        ):
+            solicitudes = VentanaSolicitudes(PaginaFalsa(), lambda: None)
+            contenido_solicitudes = solicitudes.crear_contenido()
+
+        def recorrer(control):
+            if isinstance(control, ft.Row) and control.wrap:
+                for hijo in control.controls:
+                    self.assertFalse(
+                        getattr(hijo, "expand", False),
+                        "No usar expand=True en filas con wrap"
+                    )
+            if isinstance(control, (ft.Row, ft.Column)):
+                for hijo in control.controls:
+                    recorrer(hijo)
+            elif isinstance(control, ft.Container):
+                recorrer(control.content)
+
+        recorrer(catalogo._zona)
+        recorrer(contenido_solicitudes)
+
 
 if __name__ == "__main__":
     unittest.main()
