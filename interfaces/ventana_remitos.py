@@ -232,8 +232,9 @@ class VentanaRemitos:
 
         texto = ""
 
-        for estado, fecha in historial:
-            texto += f"{fecha} - {estado}\n"
+        for estado, fecha, observacion in historial:
+            detalle = f" — {observacion}" if observacion else ""
+            texto += f"{fecha} | {estado}{detalle}\n"
 
         if texto == "":
             texto = (

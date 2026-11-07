@@ -1,6 +1,7 @@
 
 import os
 import flet as ft
+from interfaces.ui_moderno import icono_accion
 
 from clases.sede import Sede
 from datos.base_datos import (
@@ -554,30 +555,11 @@ class VentanaFlet:
                 ft.DataCell(
                     ft.Row(
                         controls=[
-                            ft.IconButton(
-                                icon=ft.Icons.VISIBILITY_OUTLINED,
-                                tooltip="Ver detalles de la sede",
-                                icon_size=19,
-                                width=36,
-                                height=36,
-                                on_click=ver
-                            ),
-                            ft.IconButton(
-                                icon=ft.Icons.EDIT_OUTLINED,
-                                tooltip="Editar sede",
-                                icon_size=19,
-                                width=36,
-                                height=36,
-                                on_click=editar
-                            ),
-                            ft.IconButton(
-                                icon=(ft.Icons.BLOCK_OUTLINED if datos[5] == 1
-                                      else ft.Icons.CHECK_CIRCLE_OUTLINED),
-                                tooltip=texto_estado,
-                                icon_size=19,
-                                width=36,
-                                height=36,
-                                on_click=cambiar
+                            icono_accion("ver", "Ver detalles de la sede", ver),
+                            icono_accion("editar", "Editar sede", editar),
+                            icono_accion(
+                                "inhabilitar" if datos[5] == 1 else "habilitar",
+                                texto_estado + " sede", cambiar
                             )
                         ],
                         spacing=0

@@ -326,8 +326,14 @@ class VentanaCatalogo:
                             weight=ft.FontWeight.BOLD, color=self._azul
                         ),
                         ft.Text(datos[5], size=12, color="#59758B"),
-                        ft.Text(f"Código: {datos[1]}  ·  Sede: {datos[4]}",
-                                size=12, color="#59758B"),
+                        ft.Text(
+                            f"Código: {datos[1]}  ·  Propietaria: {datos[4]}",
+                            size=12, color="#59758B"
+                        ),
+                        ft.Text(
+                            f"Ubicación actual: {datos[8]}",
+                            size=12, color="#59758B"
+                        ),
                         ft.Row([
                             icono_accion("ver", "Ver detalles del ejemplar", ver)
                         ], spacing=6)
@@ -400,7 +406,8 @@ class VentanaCatalogo:
             f"Código: {datos[1]}\n"
             f"Libro: {datos[2]}\n"
             f"ISBN: {datos[3]}\n"
-            f"Sede: {datos[4]}\n"
+            f"Sede propietaria: {datos[4]}\n"
+            f"Ubicación actual: {datos[8]}\n"
             f"Estado: {datos[5]}"
         )
 
