@@ -1,35 +1,28 @@
+from clases.estado_remito import construir_estado
+
 
 class Remito:
+    """Contexto State del traslado de ida."""
 
     def __init__(self, id_solicitud: int, id_ejemplar: int,
                  id_sede_origen: int, id_sede_destino: int,
                  estado: str = "Empaquetado") -> None:
 
         if id_solicitud <= 0 or id_ejemplar <= 0:
-            raise ValueError(
-                "La solicitud y el ejemplar deben ser válidos"
-            )
-
+            raise ValueError("La solicitud y el ejemplar deben ser válidos")
         if id_sede_origen <= 0 or id_sede_destino <= 0:
             raise ValueError("Las sedes deben ser válidas")
-
         if id_sede_origen == id_sede_destino:
-            raise ValueError(
-                "El remito requiere dos sedes distintas"
-            )
-
-        if estado not in (
-            "Empaquetado",
-            "En tránsito",
-            "Recibido"
-        ):
-            raise ValueError("Estado del remito inválido")
+            raise ValueError("El remito requiere dos sedes distintas")
 
         self._id_solicitud = id_solicitud
         self._id_ejemplar = id_ejemplar
         self._id_sede_origen = id_sede_origen
         self._id_sede_destino = id_sede_destino
-        self._estado = estado
+        self._estado_actual = construir_estado(estado)
+
+    def _cambiar_estado(self, estado):
+        self._estado_actual = estado
 
     @property
     def id_solicitud(self):
@@ -49,20 +42,10 @@ class Remito:
 
     @property
     def estado(self):
-        return self._estado
+        return self._estado_actual.codigo
 
-    def despachar(self) -> None:
-        if self._estado != "Empaquetado":
-            raise ValueError(
-                "Solo se puede despachar un remito empaquetado"
-            )
+    def despachar(self):
+        self._estado_actual.despachar(self)
 
-        self._estado = "En tránsito"
-
-    def recibir(self) -> None:
-        if self._estado != "En tránsito":
-            raise ValueError(
-                "Solo se puede recibir un remito en tránsito"
-            )
-
-        self._estado = "Recibido"
+    def recibir(self):
+        self._estado_actual.recibir(self)
