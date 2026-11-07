@@ -156,6 +156,21 @@ class PruebasReservasDisponibilidad(unittest.TestCase):
         self.assertEqual(self.disponibilidad(2)[5], 1)
         self.assertEqual(self.disponibilidad(2)[6], 0)
 
+    def test_reserva_en_sede_sin_copia_genera_pedido_interbibliotecario(self):
+        # El ejemplar pertenece a Centro (1) y se retira en Norte (2).
+        numero = reservas_datos.guardar_reserva(Reserva(1, 1, 2))
+        solicitud_id = reservas_datos.atender_reserva(numero)
+        with sqlite3.connect(self.ruta) as conexion:
+            registro = conexion.execute("""
+                SELECT id_sede_origen, id_sede_destino, tipo, estado
+                FROM solicitudes_prestamo
+                WHERE id_solicitud = ?
+            """, (solicitud_id,)).fetchone()
+        self.assertEqual(
+            registro, (1, 2, "Interbibliotecario", "Pendiente de traslado")
+        )
+        self.assertEqual(self.estado_ejemplar(), "Solicitado")
+
     def test_cancelar_reserva_habilita_solicitud_directa(self):
         numero = reservas_datos.guardar_reserva(Reserva(1, 1, 1))
         reservas_datos.cancelar_reserva(numero)
