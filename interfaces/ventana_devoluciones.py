@@ -450,8 +450,8 @@ class VentanaDevoluciones:
         )
 
         texto = "\n".join(
-            f"{fecha} - {estado}"
-            for estado, fecha in movimientos
+            f"{fecha} - {estado} - {observacion}"
+            for estado, fecha, observacion in movimientos
         )
 
         self._mensaje(

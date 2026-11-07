@@ -1,0 +1,28 @@
+name: Pruebas de reservas y disponibilidad
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [fix/reservas-disponibilidad-integridad]
+
+jobs:
+  integridad:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@v4
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - name: Instalar ReportLab
+        run: python -m pip install "reportlab>=4.2,<5"
+      - name: Instalar Flet para importar las pantallas
+        run: python -m pip install "flet==1.0.5"
+      - name: Comprobar importación de la interfaz
+        run: python -c "from interfaces.ventana_completa import VentanaCompleta; from interfaces.ventana_consultas import VentanaConsultas; print('Pantallas Flet importadas')"
+      - name: Comprobar sintaxis de todos los módulos
+        run: python -m compileall -q clases datos servicios interfaces main.py
+      - name: Ejecutar pruebas SQLite sin base real
+        run: python -m unittest discover -s tests -v

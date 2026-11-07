@@ -59,13 +59,43 @@ def consultar_solicitudes():
     return solicitudes
 
 
+def consultar_ejemplares_solicitables():
+    """Solo copias disponibles en origen y sin reservas pendientes anteriores."""
+    conexion = sqlite3.connect(RUTA_BASE_DATOS)
+    cursor = conexion.cursor()
+
+    cursor.execute("""
+        SELECT e.id_ejemplar, e.codigo, l.titulo, l.isbn,
+               s.nombre, e.estado, e.id_libro, e.id_sede
+        FROM ejemplares e
+        JOIN libros l ON l.id_libro = e.id_libro
+        JOIN sedes s ON s.id_sede = e.id_sede
+        WHERE e.estado = 'Disponible'
+          AND s.activa = 1
+          AND COALESCE(e.id_sede_actual, e.id_sede) = e.id_sede
+          AND NOT EXISTS (
+              SELECT 1 FROM reservas r
+              WHERE r.id_libro = e.id_libro
+                AND r.id_sede = e.id_sede
+                AND r.estado = 'Pendiente'
+          )
+        ORDER BY l.titulo, e.codigo
+    """)
+
+    ejemplares = cursor.fetchall()
+    conexion.close()
+    return ejemplares
+
+
 def guardar_solicitud(solicitud):
     conexion = sqlite3.connect(RUTA_BASE_DATOS)
     conexion.execute("PRAGMA foreign_keys = ON")
     cursor = conexion.cursor()
 
     try:
-        # El ejemplar debe estar disponible.
+        # Comprobar todo al modificar: un selector anterior puede haber quedado desactualizado.
+        # Si hay reservas pendientes para el título y origen, tienen prioridad.
+        # La copia tiene que estar físicamente en su sede propietaria.
         # El socio y las dos sedes deben estar habilitados.
         cursor.execute("""
             UPDATE ejemplares
@@ -73,6 +103,13 @@ def guardar_solicitud(solicitud):
             WHERE id_ejemplar = ?
               AND id_sede = ?
               AND estado = 'Disponible'
+              AND COALESCE(id_sede_actual, id_sede) = ?
+              AND NOT EXISTS (
+                  SELECT 1 FROM reservas r
+                  WHERE r.id_libro = ejemplares.id_libro
+                    AND r.id_sede = ejemplares.id_sede
+                    AND r.estado = 'Pendiente'
+              )
               AND EXISTS (
                   SELECT 1 FROM sedes
                   WHERE id_sede = ? AND activa = 1
@@ -89,14 +126,16 @@ def guardar_solicitud(solicitud):
             solicitud.id_ejemplar,
             solicitud.id_sede_origen,
             solicitud.id_sede_origen,
+            solicitud.id_sede_origen,
             solicitud.id_sede_destino,
             solicitud.id_socio
         ))
 
         if cursor.rowcount != 1:
             raise ValueError(
-                "El ejemplar dejó de estar disponible o alguno "
-                "de los participantes no está habilitado"
+                "No se puede solicitar este ejemplar: puede estar ocupado, "
+                "fuera de su sede, reservado por otro socio, o la sede/socio "
+                "puede estar inhabilitado"
             )
 
         cursor.execute("""
@@ -129,6 +168,8 @@ def cancelar_solicitud(id_solicitud):
     cursor = conexion.cursor()
 
     try:
+        cursor.execute("BEGIN IMMEDIATE")
+
         cursor.execute("""
             SELECT id_ejemplar, estado
             FROM solicitudes_prestamo
@@ -157,7 +198,17 @@ def cancelar_solicitud(id_solicitud):
         cursor.execute("""
             UPDATE solicitudes_prestamo
             SET estado = 'Cancelada'
-            WHERE id_solicitud = ?
+            WHERE id_solicitud = ? AND estado IN ('Pendiente', 'Pendiente de traslado')
+        """, (id_solicitud,))
+
+        if cursor.rowcount != 1:
+            raise ValueError("No se pudo cancelar la solicitud")
+
+        # Si la solicitud nació de una reserva, devolver esa reserva a la cola.
+        cursor.execute("""
+            UPDATE reservas
+            SET estado = 'Pendiente', id_solicitud = NULL
+            WHERE id_solicitud = ? AND estado = 'Atendida'
         """, (id_solicitud,))
 
         conexion.commit()

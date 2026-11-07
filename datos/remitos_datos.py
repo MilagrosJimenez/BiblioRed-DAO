@@ -25,6 +25,34 @@ def crear_tablas_remitos():
         WHERE id_sede_actual IS NULL
     """)
 
+    # id_sede_actual nació como columna agregada a una tabla existente.
+    # SQLite no permite agregarle FK con ALTER TABLE; estos disparadores
+    # validan su referencia sin reconstruir ni poner en riesgo el catálogo.
+    cursor.execute("""
+        CREATE TRIGGER IF NOT EXISTS ubicacion_valida_insert
+        BEFORE INSERT ON ejemplares
+        WHEN NEW.id_sede_actual IS NOT NULL
+             AND NOT EXISTS (
+                 SELECT 1 FROM sedes
+                 WHERE id_sede = NEW.id_sede_actual
+             )
+        BEGIN
+            SELECT RAISE(ABORT, 'La sede actual no existe');
+        END
+    """)
+    cursor.execute("""
+        CREATE TRIGGER IF NOT EXISTS ubicacion_valida_update
+        BEFORE UPDATE OF id_sede_actual ON ejemplares
+        WHEN NEW.id_sede_actual IS NOT NULL
+             AND NOT EXISTS (
+                 SELECT 1 FROM sedes
+                 WHERE id_sede = NEW.id_sede_actual
+             )
+        BEGIN
+            SELECT RAISE(ABORT, 'La sede actual no existe');
+        END
+    """)
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS remitos (
             id_remito INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -62,6 +90,14 @@ def crear_tablas_remitos():
                 REFERENCES remitos(id_remito)
         )
     """)
+
+    # Migración segura: agregar observaciones sin perder historiales anteriores.
+    cursor.execute("PRAGMA table_info(historial_remitos)")
+    if "observacion" not in [fila[1] for fila in cursor.fetchall()]:
+        cursor.execute("""
+            ALTER TABLE historial_remitos
+            ADD COLUMN observacion TEXT NOT NULL DEFAULT ''
+        """)
 
     conexion.commit()
     conexion.close()
@@ -160,7 +196,7 @@ def consultar_historial_remito(id_remito):
     cursor = conexion.cursor()
 
     cursor.execute("""
-        SELECT estado, fecha
+        SELECT estado, fecha, observacion
         FROM historial_remitos
         WHERE id_remito = ?
         ORDER BY id_historial
@@ -281,8 +317,8 @@ def empaquetar_solicitud(id_solicitud):
 
         cursor.execute("""
             INSERT INTO historial_remitos
-            (id_remito, estado)
-            VALUES (?, 'Empaquetado')
+            (id_remito, estado, observacion)
+            VALUES (?, 'Empaquetado', 'Ejemplar preparado para despacho')
         """, (id_remito,))
 
         conexion.commit()
@@ -450,11 +486,13 @@ def avanzar_remito(id_remito, nuevo_estado):
 
         cursor.execute("""
             INSERT INTO historial_remitos
-            (id_remito, estado)
-            VALUES (?, ?)
+            (id_remito, estado, observacion)
+            VALUES (?, ?, ?)
         """, (
             id_remito,
-            nuevo_estado
+            nuevo_estado,
+            ("Ejemplar despachado" if nuevo_estado == "En tránsito"
+             else "Ejemplar recibido en destino")
         ))
 
         conexion.commit()

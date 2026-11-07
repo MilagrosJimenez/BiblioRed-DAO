@@ -22,3 +22,6 @@ env/
 # Archivos temporales
 *.log
 .DS_Store
+
+# Reportes producidos al ejecutar la aplicación
+reportes_generados/
