@@ -52,15 +52,15 @@ class VentanaCompleta(VentanaFlet):
         encabezado = ft.Container(
             height=94,
             bgcolor="#FFFFFF",
-            padding=ft.padding.symmetric(horizontal=26, vertical=12),
-            border=ft.border.only(bottom=ft.BorderSide(1, BORDE)),
+            padding=ft.Padding.symmetric(horizontal=26, vertical=12),
+            border=ft.Border.only(bottom=ft.BorderSide(1, BORDE)),
             content=ft.Row([
                 marca,
                 ft.Row([
                     ft.Container(
                         content=ft.Text("SISTEMA OPERATIVO", size=10, color=AZUL,
                                         weight=ft.FontWeight.BOLD),
-                        bgcolor="#EAF2FF", padding=ft.padding.symmetric(
+                        bgcolor="#EAF2FF", padding=ft.Padding.symmetric(
                             horizontal=13, vertical=9),
                         border_radius=8
                     ),
@@ -93,7 +93,7 @@ class VentanaCompleta(VentanaFlet):
             ft.Container(
                 content=ft.Text("ESPACIO DE TRABAJO", size=11,
                                 weight=ft.FontWeight.BOLD, color="#B3CEE8"),
-                padding=ft.padding.only(left=13, top=6, bottom=10)
+                padding=ft.Padding.only(left=13, top=6, bottom=10)
             )
         ]
         for grupo, opciones in grupos:
@@ -101,7 +101,7 @@ class VentanaCompleta(VentanaFlet):
                 ft.Container(
                     content=ft.Text(grupo, size=10,
                                     weight=ft.FontWeight.BOLD, color="#80A5C8"),
-                    padding=ft.padding.only(left=13, top=17, bottom=8)
+                    padding=ft.Padding.only(left=13, top=17, bottom=8)
                 )
             )
             for nombre, icono, accion in opciones:
@@ -112,7 +112,7 @@ class VentanaCompleta(VentanaFlet):
                         ft.Text(nombre, size=12, color="#D6E5F4", expand=True,
                                 weight=ft.FontWeight.W_500)
                     ], spacing=11),
-                    padding=ft.padding.symmetric(horizontal=13, vertical=10),
+                    padding=ft.Padding.symmetric(horizontal=13, vertical=10),
                     bgcolor=AZUL_OSCURO,
                     border_radius=10,
                     on_click=lambda e, n=nombre, f=accion: self._ir_a(n, f),
@@ -127,7 +127,7 @@ class VentanaCompleta(VentanaFlet):
         ]
         menu = ft.Container(
             bgcolor=AZUL_OSCURO, width=254,
-            padding=ft.padding.symmetric(horizontal=15, vertical=17),
+            padding=ft.Padding.symmetric(horizontal=15, vertical=17),
             content=ft.Column(
                 controls=controles, spacing=2, scroll=ft.ScrollMode.AUTO,
                 expand=True
@@ -140,7 +140,7 @@ class VentanaCompleta(VentanaFlet):
                 menu,
                 ft.Container(
                     content=self._contenido,
-                    padding=ft.padding.symmetric(horizontal=27, vertical=24),
+                    padding=ft.Padding.symmetric(horizontal=27, vertical=24),
                     expand=True
                 )
             ],
@@ -183,7 +183,7 @@ class VentanaCompleta(VentanaFlet):
         def metrica(titulo, valor, subtitulo, icono):
             return ft.Container(
                 expand=True, bgcolor="#FFFFFF",
-                border=ft.border.all(1, BORDE), border_radius=16, padding=22,
+                border=ft.Border.all(1, BORDE), border_radius=16, padding=22,
                 content=ft.Column([
                     ft.Row([
                         ft.Text(titulo, size=12, color=APAGADO, expand=True),
@@ -206,7 +206,7 @@ class VentanaCompleta(VentanaFlet):
             ft.Container(
                 bgcolor="#F6F9FD",
                 border_radius=11,
-                border=ft.border.all(1, BORDE),
+                border=ft.Border.all(1, BORDE),
                 padding=15,
                 expand=True,
                 ink=True,
@@ -239,7 +239,7 @@ class VentanaCompleta(VentanaFlet):
             ], spacing=13, wrap=True),
             ft.Container(
                 bgcolor="#FFFFFF", border_radius=16,
-                border=ft.border.all(1, BORDE), padding=24,
+                border=ft.Border.all(1, BORDE), padding=24,
                 content=ft.Column([
                     ft.Text("Accesos rápidos", size=19,
                             weight=ft.FontWeight.BOLD, color=TINTA),
