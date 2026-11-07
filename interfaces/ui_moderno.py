@@ -113,11 +113,11 @@ def personalizar_controles(control):
         if color in ("white", "#ffffff"):
             control.bgcolor = "#FFFFFF"
             control.border_radius = 15
-            control.border = ft.border.all(1, BORDE)
+            control.border = ft.Border.all(1, BORDE)
         elif color in ("#f1f7fc", "#e4f2fc"):
             control.bgcolor = CLARO
             control.border_radius = 11
-            control.border = ft.border.all(1, BORDE)
+            control.border = ft.Border.all(1, BORDE)
     elif isinstance(control, ft.TextField):
         control.border_radius = 10
         control.border_color = BORDE
@@ -207,7 +207,7 @@ def instalar_busquedas(control, page):
         for hijo in list(control.controls):
             instalar_busquedas(hijo, page)
     elif isinstance(control, ft.Container):
-        instalar_busquedas(control.content)
+        instalar_busquedas(control.content, page)
 
 
 def modernizar(control, page):
