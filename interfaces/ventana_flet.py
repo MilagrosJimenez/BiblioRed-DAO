@@ -423,7 +423,7 @@ class VentanaFlet:
                 ft.DataColumn(ft.Text("Acciones"))
             ],
             rows=filas,
-            column_spacing=20,
+            column_spacing=12,
             heading_row_color="#E4F2FC"
         )
 
@@ -475,6 +475,8 @@ class VentanaFlet:
         if dia_inicio == dia_fin:
             return f"{dia_inicio} de {hora_inicio} a {hora_fin}"
 
+        # Los días se repiten cada semana; también es válido cruzar
+        # del domingo al lunes.
         return (
             f"{dia_inicio} a {dia_fin.lower()} "
             f"de {hora_inicio} a {hora_fin}"
@@ -525,14 +527,33 @@ class VentanaFlet:
                 ft.DataCell(
                     ft.Row(
                         controls=[
-                            ft.TextButton("Ver", on_click=ver),
-                            ft.TextButton("Editar", on_click=editar),
-                            ft.TextButton(
-                                texto_estado,
+                            ft.IconButton(
+                                icon=ft.Icons.VISIBILITY_OUTLINED,
+                                tooltip="Ver detalles de la sede",
+                                icon_size=19,
+                                width=36,
+                                height=36,
+                                on_click=ver
+                            ),
+                            ft.IconButton(
+                                icon=ft.Icons.EDIT_OUTLINED,
+                                tooltip="Editar sede",
+                                icon_size=19,
+                                width=36,
+                                height=36,
+                                on_click=editar
+                            ),
+                            ft.IconButton(
+                                icon=(ft.Icons.BLOCK_OUTLINED if datos[5] == 1
+                                      else ft.Icons.CHECK_CIRCLE_OUTLINED),
+                                tooltip=texto_estado,
+                                icon_size=19,
+                                width=36,
+                                height=36,
                                 on_click=cambiar
                             )
                         ],
-                        spacing=2
+                        spacing=0
                     )
                 )
             ]
@@ -592,17 +613,9 @@ class VentanaFlet:
                 )
                 return
 
-            # VALIDAR RANGO DE DÍAS
-            if self._dias.index(
-                self._dia_desde.value
-            ) > self._dias.index(self._dia_hasta.value):
-
-                self._mostrar_mensaje(
-                    "Días inválidos",
-                    "El día inicial no puede ser "
-                    "posterior al día final."
-                )
-                return
+            # El rango de días es circular: puede atravesar el domingo.
+            # Por ejemplo, viernes a lunes incluye viernes, sábado,
+            # domingo y lunes. No se exige que termine en la misma semana.
 
             # VALIDAR RANGO HORARIO
             if self._hora_desde.value >= self._hora_hasta.value:
