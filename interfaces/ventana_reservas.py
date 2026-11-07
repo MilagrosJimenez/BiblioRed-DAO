@@ -1,5 +1,6 @@
 
 import flet as ft
+from interfaces.ui_moderno import modernizar
 
 from servicios.reservas_servicio import ReservasServicio
 
@@ -61,6 +62,7 @@ class VentanaReservas:
             self._zona.controls = [
                 self._vista_reservas()
             ]
+        modernizar(self._zona, self._page)
 
     def _mensaje(self, titulo, texto):
         dialogo = ft.AlertDialog(
