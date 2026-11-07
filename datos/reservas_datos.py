@@ -30,6 +30,7 @@ def crear_tabla_reservas():
 
 
 def consultar_disponibilidad():
+    """Existencias físicas y ejemplares realmente solicitables en cada sede."""
     conexion = sqlite3.connect(RUTA_BASE_DATOS)
     cursor = conexion.cursor()
 
@@ -40,6 +41,12 @@ def consultar_disponibilidad():
                COALESCE(SUM(
                    CASE WHEN e.estado = 'Disponible'
                              AND e.id_sede = s.id_sede
+                             AND NOT EXISTS (
+                                 SELECT 1 FROM reservas r
+                                 WHERE r.id_libro = l.id_libro
+                                   AND r.id_sede = s.id_sede
+                                   AND r.estado = 'Pendiente'
+                             )
                         THEN 1 ELSE 0 END
                ), 0) AS disponibles,
                (SELECT COUNT(*) FROM reservas r
@@ -53,6 +60,7 @@ def consultar_disponibilidad():
         LEFT JOIN ejemplares e
           ON e.id_libro = l.id_libro
          AND COALESCE(e.id_sede_actual, e.id_sede) = s.id_sede
+         AND e.estado NOT IN ('Prestado', 'En tránsito', 'Retorno en tránsito')
 
         WHERE s.activa = 1
 
@@ -62,7 +70,6 @@ def consultar_disponibilidad():
 
     resultados = cursor.fetchall()
     conexion.close()
-
     return resultados
 
 
