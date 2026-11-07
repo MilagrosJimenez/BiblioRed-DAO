@@ -144,6 +144,23 @@ class PruebaConsultas(unittest.TestCase):
         finally:
             os.unlink(archivo)
 
+    def test_ubicacion_actual_valida_referencia_a_sede(self):
+        with sqlite3.connect(self.ruta) as db:
+            with self.assertRaises(sqlite3.IntegrityError):
+                db.execute("""
+                    UPDATE ejemplares SET id_sede_actual = 999
+                    WHERE id_ejemplar = 1
+                """)
+            db.execute("""
+                UPDATE ejemplares SET id_sede_actual = 2
+                WHERE id_ejemplar = 1
+            """)
+            self.assertEqual(
+                db.execute(
+                    "SELECT id_sede_actual FROM ejemplares WHERE id_ejemplar = 1"
+                ).fetchone()[0], 2
+            )
+
     def test_migracion_observaciones_no_pierde_historial(self):
         with sqlite3.connect(self.ruta) as db:
             for tabla in ("historial_remitos", "historial_retornos"):
