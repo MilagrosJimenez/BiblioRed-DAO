@@ -429,7 +429,7 @@ class VentanaReservas:
 
     def _confirmar(self, id_reserva, operacion):
         texto = (
-            "¿Querés atender esta reserva y generar una solicitud local?"
+            "¿Querés atender esta reserva y generar la solicitud de préstamo correspondiente?"
             if operacion == "atender"
             else "¿Querés cancelar esta reserva?"
         )
@@ -442,8 +442,9 @@ class VentanaReservas:
                     numero = self._servicio.atender(id_reserva)
 
                     mensaje = (
-                        f"Reserva atendida. Se creó la solicitud local "
-                        f"N.º {numero}. La entrega se confirma en "
+                        f"Reserva atendida. Se creó la solicitud "
+                        f"N.º {numero}. Si necesita traslado, avanzá desde "
+                        "Remitos y traslados. La entrega se confirma en "
                         "Préstamos efectivos."
                     )
 
