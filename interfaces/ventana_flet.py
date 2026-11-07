@@ -302,25 +302,25 @@ class VentanaFlet:
         self._editando_id = None
         self._horario_anterior = ""
 
-        self._campo_id = ft.TextField(label="ID de la sede")
+        self._campo_id = ft.TextField(label="ID", width=109)
         self._campo_nombre = ft.TextField(label="Nombre")
         self._campo_direccion = ft.TextField(label="Dirección")
-        self._campo_telefono = ft.TextField(label="Teléfono")
+        self._campo_telefono = ft.TextField(label="Teléfono", width=174)
 
         # SELECCIÓN DE DÍAS
         self._dia_desde = self._crear_selector(
-            "Día desde", self._dias
+            "Desde", self._dias
         )
         self._dia_hasta = self._crear_selector(
-            "Día hasta", self._dias
+            "Hasta", self._dias
         )
 
         # SELECCIÓN DE HORARIOS
         self._hora_desde = self._crear_selector(
-            "Hora desde", self._horas[:-1]
+            "Desde", self._horas[:-1]
         )
         self._hora_hasta = self._crear_selector(
-            "Hora hasta", self._horas[1:]
+            "Hasta", self._horas[1:]
         )
 
         self._vista_previa = ft.Text(
@@ -365,10 +365,12 @@ class VentanaFlet:
             content=ft.Column(
                 controls=[
                     self._titulo_formulario,
-                    self._campo_id,
+                    ft.Row(
+                        controls=[self._campo_id, self._campo_telefono],
+                        spacing=8
+                    ),
                     self._campo_nombre,
                     self._campo_direccion,
-                    self._campo_telefono,
                     ft.Text(
                         "Días de atención",
                         size=12,
@@ -400,7 +402,7 @@ class VentanaFlet:
                     self._boton_guardar,
                     self._boton_cancelar
                 ],
-                spacing=10,
+                spacing=7,
                 scroll=ft.ScrollMode.AUTO,
                 expand=True
             )

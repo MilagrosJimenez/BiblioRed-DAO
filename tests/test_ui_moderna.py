@@ -234,6 +234,14 @@ class PruebaNavegacionCompleta(unittest.TestCase):
             ):
                 with self.subTest(pantalla=nombre):
                     getattr(app, nombre)()
+                    if nombre == "_mostrar_sedes":
+                        self.assertEqual(app._campo_id.label, "ID")
+                        self.assertEqual(app._campo_id.width, 109)
+                        self.assertEqual(app._campo_telefono.width, 174)
+                        self.assertEqual(app._dia_desde.label, "Desde")
+                        self.assertEqual(app._dia_hasta.label, "Hasta")
+                        self.assertEqual(app._hora_desde.label, "Desde")
+                        self.assertEqual(app._hora_hasta.label, "Hasta")
 
             # También se prueban las pantallas secundarias que se reconstruyen.
             from interfaces.ventana_catalogo import VentanaCatalogo
