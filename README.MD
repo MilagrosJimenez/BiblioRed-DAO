@@ -51,3 +51,17 @@ Las pruebas automatizadas cubren reglas de prioridad, estados,
 vencimientos, integridad básica, consultas y migraciones.
 La interfaz gráfica y un recorrido completo con datos reales
 se deben verificar también en la aplicación local.
+
+## Interfaz moderna (Flet 1.0.5)
+La navegación está organizada por áreas de trabajo, con un panel general
+de indicadores y accesos rápidos. Las tablas de sedes, socios, catálogo
+y solicitudes, y los listados de remitos, préstamos, devoluciones y
+reservas, tienen búsqueda incremental: escribí una sola letra, un
+número o parte de una palabra para filtrar, sin pulsar una lupa.
+Presionar Enter también actualiza el resultado. La búsqueda ignora
+mayúsculas y tildes. En disponibilidad e inventario los filtros se
+actualizan mientras se escribe. Las nuevas vistas comparten estilo,
+sin alterar los datos de SQLite.
+
+La prueba `tests/test_ui_moderna.py` comprueba los buscadores y
+la construcción de pantallas y subpantallas con Flet 1.0.5.
