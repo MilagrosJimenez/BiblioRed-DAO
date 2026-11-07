@@ -276,17 +276,28 @@ def atender_reserva(id_reserva):
                 "Hay otra reserva anterior para este título y sede"
             )
 
-        # Buscar una copia disponible en la sede
+        # Primero ofrecer una copia propia de la sede de retiro.
+        # Si no existe, solicitar una copia de otra sede activa.
+        # Las reservas anteriores de la sede de origen tienen prioridad.
         cursor.execute("""
-            SELECT id_ejemplar
-            FROM ejemplares
-
-            WHERE id_libro = ?
-              AND id_sede = ?
-              AND COALESCE(id_sede_actual, id_sede) = ?
-              AND estado = 'Disponible'
-
-            ORDER BY id_ejemplar
+            SELECT e.id_ejemplar, e.id_sede
+            FROM ejemplares e
+            JOIN sedes origen ON origen.id_sede = e.id_sede
+            WHERE e.id_libro = ?
+              AND e.estado = 'Disponible'
+              AND origen.activa = 1
+              AND COALESCE(e.id_sede_actual, e.id_sede) = e.id_sede
+              AND (
+                  e.id_sede = ?
+                  OR NOT EXISTS (
+                      SELECT 1 FROM reservas anterior
+                      WHERE anterior.id_libro = e.id_libro
+                        AND anterior.id_sede = e.id_sede
+                        AND anterior.estado = 'Pendiente'
+                  )
+              )
+            ORDER BY CASE WHEN e.id_sede = ? THEN 0 ELSE 1 END,
+                     e.id_ejemplar
             LIMIT 1
         """, (id_libro, id_sede, id_sede))
 
@@ -294,10 +305,11 @@ def atender_reserva(id_reserva):
 
         if ejemplar is None:
             raise ValueError(
-                "Todavía no hay ejemplares disponibles en esa sede"
+                "Todavía no hay ejemplares disponibles para atender "
+                "esta reserva en las sedes activas"
             )
 
-        id_ejemplar = ejemplar[0]
+        id_ejemplar, id_origen = ejemplar
 
         cursor.execute("""
             UPDATE ejemplares
@@ -311,18 +323,20 @@ def atender_reserva(id_reserva):
                 "El ejemplar dejó de estar disponible"
             )
 
-        # Crear una solicitud local para el socio
+        # La solicitud conserva la sede real de origen y la sede de retiro.
+        tipo = "Local" if id_origen == id_sede else "Interbibliotecario"
+        estado_solicitud = (
+            "Pendiente" if tipo == "Local" else "Pendiente de traslado"
+        )
+
         cursor.execute("""
             INSERT INTO solicitudes_prestamo
             (id_socio, id_ejemplar, id_sede_origen,
              id_sede_destino, tipo, estado)
-
-            VALUES (?, ?, ?, ?, 'Local', 'Pendiente')
+            VALUES (?, ?, ?, ?, ?, ?)
         """, (
-            id_socio,
-            id_ejemplar,
-            id_sede,
-            id_sede
+            id_socio, id_ejemplar, id_origen, id_sede,
+            tipo, estado_solicitud
         ))
 
         id_solicitud = cursor.lastrowid
