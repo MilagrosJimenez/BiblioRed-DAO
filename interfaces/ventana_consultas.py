@@ -2,7 +2,7 @@
 import flet as ft
 from datos.base_datos import consultar_sedes, consultar_socios
 from servicios.consultas_bibliored_servicio import ConsultasBiblioredServicio
-from interfaces.ui_moderno import modernizar
+from interfaces.ui_moderno import normalizar, personalizar_controles
 
 
 class VentanaConsultas:
@@ -49,7 +49,7 @@ class VentanaConsultas:
     def crear_inventario(self):
         self._codigo = ft.TextField(
             label="Código del ejemplar",
-            hint_text="Filtrá escribiendo cualquier parte del código...",
+            hint_text="Buscá por código, título, estado o sede...",
             width=290,
             on_change=self._buscar_inventario,
             on_submit=self._buscar_inventario,
@@ -76,9 +76,16 @@ class VentanaConsultas:
     def _buscar_inventario(self, e=None):
         sede = self._sede.value
         filas = self._servicio.inventario(
-            self._codigo.value or "",
+            "",
             None if sede in (None, "todas") else int(sede)
         )
+        termino = normalizar(self._codigo.value)
+        filas = [
+            fila for fila in filas
+            if not termino or termino in normalizar(" ".join(
+                str(valor) for valor in fila
+            ))
+        ]
         self._resultados.controls = [
             self._tarjeta(f"{f[0]} | {f[1]}", [
                 f"Estado: {f[2]}",
@@ -86,6 +93,7 @@ class VentanaConsultas:
                 f"Ubicación registrada: {f[4]}"
             ]) for f in filas
         ] or [ft.Text("No se encontraron ejemplares.")]
+        personalizar_controles(self._resultados)
         if e is not None:
             self._page.update()
 
@@ -118,6 +126,7 @@ class VentanaConsultas:
                 f"Devolución: {f[4] or 'Aún no devuelto'} | Estado: {f[5]}"
             ]) for f in filas
         ] or [ft.Text("Este socio todavía no tiene préstamos registrados.")]
+        personalizar_controles(self._resultados)
         self._page.update()
 
     def crear_reportes(self):
