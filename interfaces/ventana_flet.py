@@ -322,6 +322,11 @@ class VentanaFlet:
         self._hora_hasta = self._crear_selector(
             "Hasta", self._horas[1:]
         )
+        self._atencion_24h = ft.Checkbox(
+            label="24 horas",
+            value=False,
+            on_change=self._cambiar_atencion_24h
+        )
 
         self._vista_previa = ft.Text(
             "Seleccioná el rango de días y horas.",
@@ -384,11 +389,17 @@ class VentanaFlet:
                         ],
                         spacing=8
                     ),
-                    ft.Text(
-                        "Horario de atención",
-                        size=12,
-                        weight=ft.FontWeight.BOLD,
-                        color=self._azul
+                    ft.Row(
+                        controls=[
+                            ft.Text(
+                                "Horario de atención",
+                                size=12,
+                                weight=ft.FontWeight.BOLD,
+                                color=self._azul
+                            ),
+                            self._atencion_24h
+                        ],
+                        spacing=9
                     ),
                     ft.Row(
                         controls=[
@@ -472,6 +483,11 @@ class VentanaFlet:
         hora_inicio = self._hora_desde.value
         hora_fin = self._hora_hasta.value
 
+        if self._atencion_24h.value:
+            periodo = (dia_inicio if dia_inicio == dia_fin
+                       else f"{dia_inicio} a {dia_fin.lower()}")
+            return f"{periodo}: atención 24 horas"
+
         # La hora de cierre menor a la de apertura significa que el
         # turno termina el día siguiente (por ejemplo, 18:00 a 09:00).
         aclaracion = " (día siguiente)" if hora_fin < hora_inicio else ""
@@ -486,22 +502,29 @@ class VentanaFlet:
             f"de {hora_inicio} a {hora_fin}{aclaracion}"
         )
 
-    def _mostrar_vista_previa(self, e=None):
-        valores = (
-            self._dia_desde.value,
-            self._dia_hasta.value,
-            self._hora_desde.value,
-            self._hora_hasta.value
-        )
+    def _cambiar_atencion_24h(self, e=None):
+        es_24h = bool(self._atencion_24h.value)
+        self._hora_desde.disabled = es_24h
+        self._hora_hasta.disabled = es_24h
+        self._mostrar_vista_previa()
 
-        if all(valores):
-            self._vista_previa.value = (
-                "Nuevo horario: " + self._texto_horario()
-            )
+    def _mostrar_vista_previa(self, e=None):
+        dias_completos = bool(self._dia_desde.value and self._dia_hasta.value)
+        horas_completas = bool(self._hora_desde.value and self._hora_hasta.value)
+
+        if dias_completos and (self._atencion_24h.value or horas_completas):
+            if not self._atencion_24h.value and self._hora_desde.value == self._hora_hasta.value:
+                self._vista_previa.value = (
+                    "Elegí horas distintas o marcá Atención 24 horas."
+                )
+            else:
+                self._vista_previa.value = (
+                    "Nuevo horario: " + self._texto_horario()
+                )
+        elif self._atencion_24h.value:
+            self._vista_previa.value = "Seleccioná los días de atención."
         else:
-            self._vista_previa.value = (
-                "Seleccioná el rango de días y horas."
-            )
+            self._vista_previa.value = "Seleccioná el rango de días y horas."
 
         self._page.update()
 
@@ -603,35 +626,39 @@ class VentanaFlet:
             self._hora_desde.value,
             self._hora_hasta.value
         )
+        es_24h = bool(self._atencion_24h.value)
+        era_24h = "24 horas" in self._horario_anterior
 
-        # AL EDITAR, CONSERVAR EL HORARIO SI NO SE CAMBIA
-        if self._editando_id is not None and not any(valores):
+        # Conserva el horario anterior únicamente si no se seleccionó
+        # ningún valor nuevo ni se cambió la modalidad 24 horas.
+        if (self._editando_id is not None and not any(valores)
+                and es_24h == era_24h):
             horarios = self._horario_anterior
-
         else:
-            if not all(valores):
+            if not self._dia_desde.value or not self._dia_hasta.value:
                 self._mostrar_mensaje(
                     "Horarios incompletos",
-                    "Seleccioná los días y las horas "
-                    "de apertura y cierre."
+                    "Seleccioná los días de atención."
                 )
                 return
 
-            # El rango de días es circular: puede atravesar el domingo.
-            # Por ejemplo, viernes a lunes incluye viernes, sábado,
-            # domingo y lunes. No se exige que termine en la misma semana.
+            if not es_24h:
+                if not self._hora_desde.value or not self._hora_hasta.value:
+                    self._mostrar_mensaje(
+                        "Horarios incompletos",
+                        "Seleccioná las horas de apertura y cierre."
+                    )
+                    return
+                if self._hora_desde.value == self._hora_hasta.value:
+                    self._mostrar_mensaje(
+                        "Horario inválido",
+                        "Las horas iguales son ambiguas. Para atención "
+                        "continua, marcá la opción 24 horas."
+                    )
+                    return
 
-            # Una hora de cierre anterior a la apertura es un turno
-            # nocturno y se guarda como cierre al día siguiente.
-            # Solo se rechaza la igualdad para evitar ambigüedad
-            # entre 0 y 24 horas de atención.
-            if self._hora_desde.value == self._hora_hasta.value:
-                self._mostrar_mensaje(
-                    "Horario inválido",
-                    "La hora de apertura y la de cierre no pueden ser iguales."
-                )
-                return
-
+            # Los días son un rango semanal circular y los turnos
+            # nocturnos se indican como cierre al día siguiente.
             horarios = self._texto_horario()
 
         try:
@@ -686,6 +713,9 @@ class VentanaFlet:
     def _cargar_edicion(self, datos):
         self._editando_id = datos[0]
         self._horario_anterior = datos[4]
+        self._atencion_24h.value = "24 horas" in datos[4]
+        self._hora_desde.disabled = bool(self._atencion_24h.value)
+        self._hora_hasta.disabled = bool(self._atencion_24h.value)
 
         self._campo_id.value = str(datos[0])
         self._campo_id.read_only = True
