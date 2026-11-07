@@ -320,11 +320,11 @@ class VentanaCatalogo:
                 ft.Container(
                     bgcolor="#F1F7FC", padding=14, border_radius=11,
                     content=ft.Column([
-                        ft.Row([
-                            ft.Text(datos[2], size=14, weight=ft.FontWeight.BOLD,
-                                    color=self._azul, expand=True),
-                            ft.Text(datos[5], size=12, color="#59758B")
-                        ], wrap=True, spacing=8),
+                        ft.Text(
+                            datos[2], size=14,
+                            weight=ft.FontWeight.BOLD, color=self._azul
+                        ),
+                        ft.Text(datos[5], size=12, color="#59758B"),
                         ft.Text(f"Código: {datos[1]}  ·  Sede: {datos[4]}",
                                 size=12, color="#59758B"),
                         ft.Row([
