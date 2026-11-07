@@ -218,6 +218,8 @@ class PruebaRangoSemanalSedes(unittest.TestCase):
         vista._dia_hasta = SimpleNamespace(value="Lunes")
         vista._hora_desde = SimpleNamespace(value="09:00")
         vista._hora_hasta = SimpleNamespace(value="18:00")
+        vista._atencion_24h = SimpleNamespace(value=False)
+        vista._horario_anterior = ""
         vista._dias = [
             "Lunes", "Martes", "Miércoles", "Jueves",
             "Viernes", "Sábado", "Domingo"
@@ -233,31 +235,110 @@ class PruebaRangoSemanalSedes(unittest.TestCase):
                          "Viernes a lunes de 09:00 a 18:00")
         self.assertEqual(mensajes[-1][0], "Operación realizada")
 
-    def test_rechaza_hora_cierre_anterior_a_apertura(self):
+    @staticmethod
+    def _crear_vista(hora_desde, hora_hasta, atencion_24h=False):
         from types import SimpleNamespace
-        from unittest.mock import patch
         from interfaces.ventana_flet import VentanaFlet
 
         vista = VentanaFlet.__new__(VentanaFlet)
         vista._editando_id = None
-        vista._campo_id = SimpleNamespace(value="9002")
+        vista._horario_anterior = ""
+        vista._campo_id = SimpleNamespace(value="9003")
         vista._campo_nombre = SimpleNamespace(value="Biblioteca Horario")
         vista._campo_direccion = SimpleNamespace(value="Calle 10")
         vista._campo_telefono = SimpleNamespace(value="3512222")
         vista._dia_desde = SimpleNamespace(value="Viernes")
         vista._dia_hasta = SimpleNamespace(value="Lunes")
-        vista._hora_desde = SimpleNamespace(value="18:00")
-        vista._hora_hasta = SimpleNamespace(value="09:00")
+        vista._hora_desde = SimpleNamespace(value=hora_desde, disabled=atencion_24h)
+        vista._hora_hasta = SimpleNamespace(value=hora_hasta, disabled=atencion_24h)
+        vista._atencion_24h = SimpleNamespace(value=atencion_24h)
+        vista._vista_previa = SimpleNamespace(value="")
         vista._dias = [
             "Lunes", "Martes", "Miércoles", "Jueves",
             "Viernes", "Sábado", "Domingo"
         ]
+        vista._mostrar_sedes = lambda: None
+        return vista
+
+    def test_turno_nocturno_aceptado_con_dia_siguiente(self):
+        from unittest.mock import patch
+        vista = self._crear_vista("18:00", "09:00")
         mensajes = []
-        vista._mostrar_mensaje = lambda titulo, texto: mensajes.append((titulo, texto))
+        vista._mostrar_mensaje = lambda titulo, texto: mensajes.append(titulo)
+
+        with patch("interfaces.ventana_flet.guardar_sede", return_value=True) as guardar:
+            vista._guardar_sede(None)
+        guardar.assert_called_once()
+        self.assertEqual(
+            guardar.call_args.args[0].horarios,
+            "Viernes a lunes de 18:00 a 09:00 (día siguiente)"
+        )
+        self.assertEqual(mensajes[-1], "Operación realizada")
+
+    def test_horas_iguales_se_rechazan_sin_24_horas(self):
+        from unittest.mock import patch
+        vista = self._crear_vista("09:00", "09:00")
+        mensajes = []
+        vista._mostrar_mensaje = lambda titulo, texto: mensajes.append(titulo)
         with patch("interfaces.ventana_flet.guardar_sede") as guardar:
             vista._guardar_sede(None)
         guardar.assert_not_called()
-        self.assertEqual(mensajes[-1][0], "Horario inválido")
+        self.assertEqual(mensajes[-1], "Horario inválido")
+
+    def test_atencion_24_horas_sin_seleccionar_horas(self):
+        from unittest.mock import patch
+        vista = self._crear_vista(None, None, atencion_24h=True)
+        mensajes = []
+        vista._mostrar_mensaje = lambda titulo, texto: mensajes.append(titulo)
+        with patch("interfaces.ventana_flet.guardar_sede", return_value=True) as guardar:
+            vista._guardar_sede(None)
+        self.assertEqual(
+            guardar.call_args.args[0].horarios,
+            "Viernes a lunes: atención 24 horas"
+        )
+        self.assertEqual(mensajes[-1], "Operación realizada")
+
+    def test_atencion_24_horas_requiere_dias(self):
+        from unittest.mock import patch
+        vista = self._crear_vista(None, None, atencion_24h=True)
+        vista._dia_desde.value = None
+        mensajes = []
+        vista._mostrar_mensaje = lambda titulo, texto: mensajes.append(titulo)
+        with patch("interfaces.ventana_flet.guardar_sede") as guardar:
+            vista._guardar_sede(None)
+        guardar.assert_not_called()
+        self.assertEqual(mensajes[-1], "Horarios incompletos")
+
+    def test_alternar_24_horas_bloquea_y_habilita_selectores(self):
+        vista = self._crear_vista("18:00", "09:00", atencion_24h=True)
+        vista._page = PaginaFalsa()
+        vista._cambiar_atencion_24h()
+        self.assertTrue(vista._hora_desde.disabled)
+        self.assertTrue(vista._hora_hasta.disabled)
+        self.assertIn("atención 24 horas", vista._vista_previa.value)
+        vista._atencion_24h.value = False
+        vista._cambiar_atencion_24h()
+        self.assertFalse(vista._hora_desde.disabled)
+        self.assertFalse(vista._hora_hasta.disabled)
+        self.assertIn("día siguiente", vista._vista_previa.value)
+
+    def test_edicion_sin_cambios_conserva_horario_original(self):
+        from unittest.mock import patch
+        vista = self._crear_vista(None, None)
+        vista._editando_id = 9003
+        vista._horario_anterior = "Lunes a viernes de 09:00 a 18:00"
+        vista._dia_desde.value = None
+        vista._dia_hasta.value = None
+        mensajes = []
+        vista._mostrar_mensaje = lambda titulo, texto: mensajes.append(titulo)
+        with patch("interfaces.ventana_flet.actualizar_datos_sede") as actualizar:
+            vista._guardar_sede(None)
+        actualizar.assert_called_once()
+        self.assertEqual(
+            actualizar.call_args.args[0].horarios,
+            "Lunes a viernes de 09:00 a 18:00"
+        )
+        self.assertEqual(mensajes[-1], "Operación realizada")
 
 
 class PruebaNavegacionCompleta(unittest.TestCase):
