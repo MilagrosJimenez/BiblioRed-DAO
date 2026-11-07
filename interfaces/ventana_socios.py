@@ -1,5 +1,6 @@
 
 import flet as ft
+from interfaces.ui_moderno import icono_accion
 
 from clases.socio import Socio
 from datos.base_datos import (
@@ -147,9 +148,12 @@ class VentanaSocios:
                 ft.DataCell(
                     ft.Row(
                         controls=[
-                            ft.TextButton("Ver", on_click=ver),
-                            ft.TextButton("Editar", on_click=editar),
-                            ft.TextButton(accion, on_click=cambiar)
+                            icono_accion("ver", "Ver detalles del socio", ver),
+                            icono_accion("editar", "Editar socio", editar),
+                            icono_accion(
+                                "inhabilitar" if datos[6] == 1 else "habilitar",
+                                accion + " socio", cambiar
+                            )
                         ],
                         spacing=1
                     )
