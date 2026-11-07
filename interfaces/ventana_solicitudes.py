@@ -20,6 +20,7 @@ class VentanaSolicitudes:
 
         self._socio = ft.Dropdown(
             label="Socio habilitado",
+            width=305,
             options=[
                 ft.DropdownOption(
                     key=str(s[0]),
@@ -31,6 +32,7 @@ class VentanaSolicitudes:
 
         self._ejemplar = ft.Dropdown(
             label="Ejemplar disponible (origen)",
+            width=305,
             options=[
                 ft.DropdownOption(
                     key=str(e[0]),
@@ -42,6 +44,7 @@ class VentanaSolicitudes:
 
         self._destino = ft.Dropdown(
             label="Sede destino",
+            width=305,
             options=[
                 ft.DropdownOption(
                     key=str(s[0]),
