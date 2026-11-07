@@ -49,6 +49,13 @@ def crear_tablas_devoluciones():
         )
     """)
 
+    cursor.execute("PRAGMA table_info(historial_retornos)")
+    if "observacion" not in [fila[1] for fila in cursor.fetchall()]:
+        cursor.execute("""
+            ALTER TABLE historial_retornos
+            ADD COLUMN observacion TEXT NOT NULL DEFAULT ''
+        """)
+
     conexion.commit()
     conexion.close()
 
@@ -261,7 +268,7 @@ def consultar_historial_retorno(id_remito):
     cursor = conexion.cursor()
 
     cursor.execute("""
-        SELECT estado, fecha
+        SELECT estado, fecha, observacion
         FROM historial_retornos
         WHERE id_remito = ?
         ORDER BY id_historial
@@ -341,8 +348,8 @@ def preparar_retorno(id_devolucion):
         id_remito = cursor.lastrowid
 
         cursor.execute("""
-            INSERT INTO historial_retornos (id_remito, estado)
-            VALUES (?, 'Empaquetado')
+            INSERT INTO historial_retornos (id_remito, estado, observacion)
+            VALUES (?, 'Empaquetado', 'Devolución preparada para retorno')
         """, (id_remito,))
 
         conexion.commit()
@@ -454,9 +461,11 @@ def avanzar_retorno(id_remito, nuevo_estado):
             raise ValueError("No se pudo actualizar el ejemplar")
 
         cursor.execute("""
-            INSERT INTO historial_retornos (id_remito, estado)
-            VALUES (?, ?)
-        """, (id_remito, nuevo_estado))
+            INSERT INTO historial_retornos (id_remito, estado, observacion)
+            VALUES (?, ?, ?)
+        """, (id_remito, nuevo_estado,
+             "Retorno despachado" if nuevo_estado == "En tránsito"
+             else "Ejemplar retornado a la sede propietaria"))
 
         conexion.commit()
         return nuevo_estado_e
