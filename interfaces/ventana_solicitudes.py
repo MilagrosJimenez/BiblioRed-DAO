@@ -124,13 +124,16 @@ class VentanaSolicitudes:
                                 size=12),
                         ft.Text(f"Origen: {datos[5]}  ·  Destino: {datos[6]}",
                                 size=12, color="#59758B"),
+                        ft.Text(
+                            f"Tipo: {datos[7]}", size=12, color="#59758B"
+                        ),
                         ft.Row([
-                            ft.Text(f"Tipo: {datos[7]}", size=12,
-                                    color="#59758B", expand=True),
-                            ft.TextButton("Cancelar solicitud",
-                                          on_click=cancelar,
-                                          disabled=not puede_cancelar)
-                        ], spacing=8, wrap=True)
+                            ft.TextButton(
+                                "Cancelar solicitud",
+                                on_click=cancelar,
+                                disabled=not puede_cancelar
+                            )
+                        ], spacing=8)
                     ], spacing=8)
                 )
             )
