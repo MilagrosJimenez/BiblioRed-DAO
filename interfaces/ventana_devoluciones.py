@@ -1,5 +1,6 @@
 
 import flet as ft
+from interfaces.ui_moderno import modernizar
 
 from servicios.devoluciones_servicio import DevolucionesServicio
 
@@ -55,6 +56,8 @@ class VentanaDevoluciones:
             self._zona.controls = [self._vista_devoluciones()]
         else:
             self._zona.controls = [self._vista_retornos()]
+
+        modernizar(self._zona, self._page)
 
     def _mensaje(self, titulo, texto):
         dialogo = ft.AlertDialog(

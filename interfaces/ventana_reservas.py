@@ -1,5 +1,6 @@
 
 import flet as ft
+from interfaces.ui_moderno import modernizar, normalizar
 
 from servicios.reservas_servicio import ReservasServicio
 
@@ -61,6 +62,7 @@ class VentanaReservas:
             self._zona.controls = [
                 self._vista_reservas()
             ]
+        modernizar(self._zona, self._page)
 
     def _mensaje(self, titulo, texto):
         dialogo = ft.AlertDialog(
@@ -79,7 +81,10 @@ class VentanaReservas:
     def _vista_disponibilidad(self):
         self._filtro = ft.TextField(
             label="Buscar por título o ISBN",
-            width=310
+            hint_text="Escribí una letra, un número o parte del título...",
+            width=310,
+            on_change=self._buscar,
+            on_submit=self._buscar
         )
 
         sedes = self._servicio.listar_sedes_activas()
@@ -88,6 +93,7 @@ class VentanaReservas:
             label="Sede",
             width=230,
             value="todas",
+            on_select=self._buscar,
             options=[
                 ft.DropdownOption(
                     key="todas",
@@ -152,7 +158,7 @@ class VentanaReservas:
         self._page.update()
 
     def _actualizar_disponibilidad(self):
-        filtro = (self._filtro.value or "").strip().lower()
+        filtro = normalizar(self._filtro.value)
         filtro_sede = self._filtro_sede.value or "todas"
 
         tarjetas = []
@@ -161,7 +167,7 @@ class VentanaReservas:
 
             id_libro, titulo, isbn, id_sede, sede, copias, disponibles, pendientes = datos
 
-            if filtro not in titulo.lower() and filtro not in isbn.lower():
+            if filtro not in normalizar(titulo) and filtro not in normalizar(isbn):
                 continue
 
             if filtro_sede != "todas" and filtro_sede != str(id_sede):
