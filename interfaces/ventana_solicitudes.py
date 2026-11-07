@@ -1,5 +1,6 @@
 
 import flet as ft
+from interfaces.ui_moderno import icono_accion
 
 from servicios.prestamos_servicio import PrestamosServicio
 
@@ -128,10 +129,9 @@ class VentanaSolicitudes:
                             f"Tipo: {datos[7]}", size=12, color="#59758B"
                         ),
                         ft.Row([
-                            ft.TextButton(
-                                "Cancelar solicitud",
-                                on_click=cancelar,
-                                disabled=not puede_cancelar
+                            icono_accion(
+                                "cancelar", "Cancelar solicitud",
+                                cancelar, disabled=not puede_cancelar
                             )
                         ], spacing=8)
                     ], spacing=8)
@@ -190,10 +190,9 @@ class VentanaSolicitudes:
                 ft.DataCell(ft.Text(datos[7])),
                 ft.DataCell(ft.Text(datos[8])),
                 ft.DataCell(
-                    ft.TextButton(
-                        "Cancelar",
-                        on_click=cancelar,
-                        disabled=not puede_cancelar
+                    icono_accion(
+                        "cancelar", "Cancelar solicitud",
+                        cancelar, disabled=not puede_cancelar
                     )
                 )
             ]

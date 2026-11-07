@@ -341,6 +341,53 @@ class PruebaRangoSemanalSedes(unittest.TestCase):
         self.assertEqual(mensajes[-1], "Operación realizada")
 
 
+class PruebasIconosAcciones(unittest.TestCase):
+    def test_ayudas_y_tamanos_uniformes(self):
+        from interfaces.ui_moderno import icono_accion
+
+        for tipo in (
+            "ver", "editar", "habilitar", "inhabilitar",
+            "cancelar", "historial", "despachar", "recibir", "atender"
+        ):
+            boton = icono_accion(tipo, "Acción de prueba", lambda e: None)
+            self.assertIsInstance(boton, ft.IconButton)
+            self.assertEqual(boton.tooltip, "Acción de prueba")
+            self.assertEqual(boton.width, 36)
+            self.assertEqual(boton.height, 36)
+            self.assertEqual(boton.icon_size, 19)
+            self.assertIsNotNone(boton.on_click)
+
+        with self.assertRaises(ValueError):
+            icono_accion("desconocida", "No existe", lambda e: None)
+
+    def test_socios_iconos_conservan_acciones(self):
+        from interfaces.ventana_socios import VentanaSocios
+
+        pantalla = VentanaSocios.__new__(VentanaSocios)
+        llamadas = []
+        pantalla._ver = lambda datos: llamadas.append(("ver", datos[1]))
+        pantalla._cargar_edicion = lambda datos: llamadas.append(("editar", datos[1]))
+        pantalla._cambiar_estado = lambda datos: llamadas.append(("estado", datos[1]))
+
+        for habilitado, etiqueta in ((1, "Inhabilitar socio"),
+                                     (0, "Habilitar socio")):
+            datos = (1, "99001234", "Lucía", "Prueba", "351", None, habilitado)
+            fila = pantalla._crear_fila(datos)
+            acciones = fila.cells[-1].content.controls
+            self.assertEqual(len(acciones), 3)
+            self.assertTrue(all(isinstance(a, ft.IconButton) for a in acciones))
+            self.assertEqual(acciones[0].tooltip, "Ver detalles del socio")
+            self.assertEqual(acciones[1].tooltip, "Editar socio")
+            self.assertEqual(acciones[2].tooltip, etiqueta)
+            for boton in acciones:
+                boton.on_click(None)
+
+        self.assertEqual(
+            llamadas,
+            [("ver", "99001234"), ("editar", "99001234"), ("estado", "99001234")] * 2
+        )
+
+
 class PruebaNavegacionCompleta(unittest.TestCase):
     def test_todas_las_pantallas_abren_con_base_temporal(self):
         import os
@@ -463,9 +510,10 @@ class PruebasListadosCompactos(unittest.TestCase):
         )
         self.assertIn("Libro de prueba", textos)
         botones = [
-            x for x in encontrados if isinstance(x, ft.TextButton)
+            x for x in encontrados if isinstance(x, ft.IconButton)
         ]
-        self.assertTrue(any(x.content == "Editar libro" for x in botones))
+        self.assertTrue(any(x.tooltip == "Editar libro" for x in botones))
+        self.assertTrue(any(x.tooltip == "Ver detalles del libro" for x in botones))
 
     def test_solicitudes_muestran_estado_y_cancelacion(self):
         from unittest.mock import patch
@@ -523,7 +571,7 @@ class PruebasListadosCompactos(unittest.TestCase):
         self.assertIn("Pendiente de traslado", textos)
         self.assertIn("Sede Norte", textos)
         self.assertTrue(any(
-            isinstance(x, ft.TextButton) and x.content == "Cancelar solicitud"
+            isinstance(x, ft.IconButton) and x.tooltip == "Cancelar solicitud"
             for x in encontrados
         ))
 

@@ -1,5 +1,6 @@
 
 import flet as ft
+from interfaces.ui_moderno import icono_accion
 from interfaces.ui_moderno import modernizar
 
 from servicios.catalogo_servicio import CatalogoServicio
@@ -143,8 +144,8 @@ class VentanaCatalogo:
                         ft.Text(f"ISBN: {datos[1]}  ·  Autor: {datos[3]}",
                                 size=12, color="#59758B"),
                         ft.Row([
-                            ft.TextButton("Ver detalles", on_click=ver),
-                            ft.TextButton("Editar libro", on_click=editar)
+                            icono_accion("ver", "Ver detalles del libro", ver),
+                            icono_accion("editar", "Editar libro", editar)
                         ], spacing=6, wrap=True)
                     ], spacing=5)
                 )
@@ -328,7 +329,7 @@ class VentanaCatalogo:
                         ft.Text(f"Código: {datos[1]}  ·  Sede: {datos[4]}",
                                 size=12, color="#59758B"),
                         ft.Row([
-                            ft.TextButton("Ver detalles", on_click=ver)
+                            icono_accion("ver", "Ver detalles del ejemplar", ver)
                         ], spacing=6)
                     ], spacing=5)
                 )

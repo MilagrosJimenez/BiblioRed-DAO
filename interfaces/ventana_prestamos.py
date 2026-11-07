@@ -1,6 +1,7 @@
 
 from datetime import date
 import flet as ft
+from interfaces.ui_moderno import icono_accion
 
 from servicios.prestamos_efectivos_servicio import PrestamosEfectivosServicio
 
@@ -173,10 +174,7 @@ class VentanaPrestamos:
                         + self._formatear_fecha(datos[7]),
                         size=12
                     ),
-                    ft.TextButton(
-                        "Ver detalles",
-                        on_click=ver
-                    )
+                    icono_accion("ver", "Ver detalles del préstamo", ver)
                 ],
                 spacing=7
             )
