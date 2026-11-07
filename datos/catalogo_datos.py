@@ -25,6 +25,7 @@ def crear_tablas_catalogo():
             codigo TEXT NOT NULL UNIQUE,
             id_libro INTEGER NOT NULL,
             id_sede INTEGER NOT NULL,
+            id_sede_actual INTEGER,
             estado TEXT NOT NULL,
             FOREIGN KEY (id_libro) REFERENCES libros(id_libro),
             FOREIGN KEY (id_sede) REFERENCES sedes(id_sede)
@@ -121,11 +122,13 @@ def guardar_ejemplar(ejemplar):
         return False
 
     cursor.execute("""
-        INSERT INTO ejemplares (codigo, id_libro, id_sede, estado)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO ejemplares
+            (codigo, id_libro, id_sede, id_sede_actual, estado)
+        VALUES (?, ?, ?, ?, ?)
     """, (
         ejemplar.codigo,
         ejemplar.id_libro,
+        ejemplar.id_sede,
         ejemplar.id_sede,
         ejemplar.estado
     ))
