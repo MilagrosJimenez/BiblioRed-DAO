@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [fix/reservas-disponibilidad-integridad, design/interfaz-moderna-bibliored, fix/panel-gris-layout]
+    branches: [fix/reservas-disponibilidad-integridad, design/interfaz-moderna-bibliored, fix/panel-gris-layout, ui/listados-sin-recortes]
 
 jobs:
   integridad:

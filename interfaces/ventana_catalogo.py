@@ -119,8 +119,7 @@ class VentanaCatalogo:
             )
         )
 
-        filas = []
-
+        tarjetas = []
         for datos in self._servicio.listar_libros():
 
             def editar(e, libro=datos):
@@ -129,45 +128,31 @@ class VentanaCatalogo:
             def ver(e, libro=datos):
                 self._ver_libro(libro)
 
-            filas.append(
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Text(datos[1])),
-                        ft.DataCell(ft.Text(datos[2])),
-                        ft.DataCell(ft.Text(datos[3])),
-                        ft.DataCell(ft.Text(str(datos[5]))),
-                        ft.DataCell(ft.Text(str(datos[6]))),
-                        ft.DataCell(
-                            ft.Row(
-                                controls=[
-                                    ft.TextButton(
-                                        "Ver",
-                                        on_click=ver
-                                    ),
-                                    ft.TextButton(
-                                        "Editar",
-                                        on_click=editar
-                                    )
-                                ],
-                                spacing=0
-                            )
-                        )
-                    ]
+            tarjetas.append(
+                ft.Container(
+                    bgcolor="#F1F7FC", padding=14, border_radius=11,
+                    content=ft.Column([
+                        ft.Row([
+                            ft.Text(datos[2], size=15, weight=ft.FontWeight.BOLD,
+                                    color=self._azul, expand=True),
+                            ft.Text(f"{datos[6]} disponibles / {datos[5]} copias",
+                                    size=11, color="#59758B")
+                        ], wrap=True, spacing=8),
+                        ft.Text(f"ISBN: {datos[1]}  ·  Autor: {datos[3]}",
+                                size=12, color="#59758B"),
+                        ft.Row([
+                            ft.TextButton("Ver detalles", on_click=ver),
+                            ft.TextButton("Editar libro", on_click=editar)
+                        ], spacing=6, wrap=True)
+                    ], spacing=5)
                 )
             )
 
-        tabla = ft.DataTable(
-            columns=[
-                ft.DataColumn(ft.Text("ISBN")),
-                ft.DataColumn(ft.Text("Título")),
-                ft.DataColumn(ft.Text("Autor")),
-                ft.DataColumn(ft.Text("Copias")),
-                ft.DataColumn(ft.Text("Disponibles")),
-                ft.DataColumn(ft.Text("Acciones"))
+        tarjetas_listado = ft.Column(
+            controls=tarjetas or [
+                ft.Text("Todavía no hay libros registrados.", color="#678197")
             ],
-            rows=filas,
-            column_spacing=17,
-            heading_row_color="#E4F2FC"
+            spacing=10
         )
 
         listado = ft.Container(
@@ -183,10 +168,7 @@ class VentanaCatalogo:
                         weight=ft.FontWeight.BOLD,
                         color=self._azul
                     ),
-                    ft.Row(
-                        controls=[tabla],
-                        scroll=ft.ScrollMode.AUTO
-                    )
+                    tarjetas_listado
                 ],
                 spacing=14
             )
@@ -271,6 +253,7 @@ class VentanaCatalogo:
 
         self._libro = ft.Dropdown(
             label="Libro",
+            width=260,
             options=[
                 ft.DropdownOption(
                     key=str(l[0]),
@@ -282,6 +265,7 @@ class VentanaCatalogo:
 
         self._sede = ft.Dropdown(
             label="Sede",
+            width=260,
             options=[
                 ft.DropdownOption(
                     key=str(s[0]),
@@ -324,41 +308,36 @@ class VentanaCatalogo:
             )
         )
 
-        filas = []
-
+        tarjetas = []
         for datos in self._servicio.listar_ejemplares():
 
             def ver(e, ejemplar=datos):
                 self._ver_ejemplar(ejemplar)
 
-            filas.append(
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(ft.Text(datos[1])),
-                        ft.DataCell(ft.Text(datos[2])),
-                        ft.DataCell(ft.Text(datos[4])),
-                        ft.DataCell(ft.Text(datos[5])),
-                        ft.DataCell(
-                            ft.TextButton(
-                                "Ver",
-                                on_click=ver
-                            )
-                        )
-                    ]
+            tarjetas.append(
+                ft.Container(
+                    bgcolor="#F1F7FC", padding=14, border_radius=11,
+                    content=ft.Column([
+                        ft.Row([
+                            ft.Text(datos[2], size=14, weight=ft.FontWeight.BOLD,
+                                    color=self._azul, expand=True),
+                            ft.Text(datos[5], size=12, color="#59758B")
+                        ], wrap=True, spacing=8),
+                        ft.Text(f"Código: {datos[1]}  ·  Sede: {datos[4]}",
+                                size=12, color="#59758B"),
+                        ft.Row([
+                            ft.TextButton("Ver detalles", on_click=ver)
+                        ], spacing=6)
+                    ], spacing=5)
                 )
             )
 
-        tabla = ft.DataTable(
-            columns=[
-                ft.DataColumn(ft.Text("Código")),
-                ft.DataColumn(ft.Text("Libro")),
-                ft.DataColumn(ft.Text("Sede")),
-                ft.DataColumn(ft.Text("Estado")),
-                ft.DataColumn(ft.Text("Acción"))
+        tarjetas_listado = ft.Column(
+            controls=tarjetas or [
+                ft.Text("Todavía no hay ejemplares registrados.",
+                        color="#678197")
             ],
-            rows=filas,
-            column_spacing=18,
-            heading_row_color="#E4F2FC"
+            spacing=10
         )
 
         listado = ft.Container(
@@ -374,10 +353,7 @@ class VentanaCatalogo:
                         weight=ft.FontWeight.BOLD,
                         color=self._azul
                     ),
-                    ft.Row(
-                        controls=[tabla],
-                        scroll=ft.ScrollMode.AUTO
-                    )
+                    tarjetas_listado
                 ],
                 spacing=14
             )

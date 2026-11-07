@@ -20,6 +20,7 @@ class VentanaSolicitudes:
 
         self._socio = ft.Dropdown(
             label="Socio habilitado",
+            width=305,
             options=[
                 ft.DropdownOption(
                     key=str(s[0]),
@@ -31,6 +32,7 @@ class VentanaSolicitudes:
 
         self._ejemplar = ft.Dropdown(
             label="Ejemplar disponible (origen)",
+            width=305,
             options=[
                 ft.DropdownOption(
                     key=str(e[0]),
@@ -42,6 +44,7 @@ class VentanaSolicitudes:
 
         self._destino = ft.Dropdown(
             label="Sede destino",
+            width=305,
             options=[
                 ft.DropdownOption(
                     key=str(s[0]),
@@ -96,25 +99,46 @@ class VentanaSolicitudes:
             )
         )
 
-        filas = []
-
+        tarjetas = []
         for datos in self._servicio.listar_solicitudes():
-            filas.append(self._crear_fila(datos))
+            puede_cancelar = datos[8] in (
+                "Pendiente", "Pendiente de traslado"
+            )
 
-        tabla = ft.DataTable(
-            columns=[
-                ft.DataColumn(ft.Text("N°")),
-                ft.DataColumn(ft.Text("Socio")),
-                ft.DataColumn(ft.Text("Ejemplar")),
-                ft.DataColumn(ft.Text("Origen")),
-                ft.DataColumn(ft.Text("Destino")),
-                ft.DataColumn(ft.Text("Tipo")),
-                ft.DataColumn(ft.Text("Estado")),
-                ft.DataColumn(ft.Text("Acción"))
+            def cancelar(e, numero=datos[0]):
+                self._confirmar_cancelacion(numero)
+
+            tarjetas.append(
+                ft.Container(
+                    bgcolor="#F1F7FC", padding=14, border_radius=11,
+                    content=ft.Column([
+                        ft.Row([
+                            ft.Text(f"Solicitud N.º {datos[0]}",
+                                    weight=ft.FontWeight.BOLD, size=15,
+                                    color=self._azul, expand=True),
+                            ft.Text(datos[8], size=12, color="#59758B")
+                        ], spacing=8, wrap=True),
+                        ft.Text(f"Socio: {datos[1]}  ·  Ejemplar: {datos[3]}",
+                                size=12),
+                        ft.Text(f"Origen: {datos[5]}  ·  Destino: {datos[6]}",
+                                size=12, color="#59758B"),
+                        ft.Row([
+                            ft.Text(f"Tipo: {datos[7]}", size=12,
+                                    color="#59758B", expand=True),
+                            ft.TextButton("Cancelar solicitud",
+                                          on_click=cancelar,
+                                          disabled=not puede_cancelar)
+                        ], spacing=8, wrap=True)
+                    ], spacing=8)
+                )
+            )
+
+        tarjetas_listado = ft.Column(
+            controls=tarjetas or [
+                ft.Text("Todavía no hay solicitudes registradas.",
+                        color="#678197")
             ],
-            rows=filas,
-            heading_row_color="#E4F2FC",
-            column_spacing=18
+            spacing=10
         )
 
         listado = ft.Container(
@@ -130,10 +154,7 @@ class VentanaSolicitudes:
                         weight=ft.FontWeight.BOLD,
                         color=self._azul
                     ),
-                    ft.Row(
-                        controls=[tabla],
-                        scroll=ft.ScrollMode.AUTO
-                    )
+                    tarjetas_listado
                 ],
                 spacing=15
             )

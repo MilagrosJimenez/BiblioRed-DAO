@@ -253,6 +253,101 @@ class PruebaNavegacionCompleta(unittest.TestCase):
                 p.stop()
             os.unlink(ruta)
 
+    
+class PruebasListadosCompactos(unittest.TestCase):
+    def test_catalogo_muestra_datos_y_acciones_sin_tabla_ancha(self):
+        from unittest.mock import patch
+        from interfaces.ventana_catalogo import VentanaCatalogo
+
+        pagina = PaginaFalsa()
+        with patch(
+            "interfaces.ventana_catalogo.CatalogoServicio.listar_libros",
+            return_value=[(1, "ISBN01", "Libro de prueba", "Autora", "Editorial", 1, 1)]
+        ):
+            vista = VentanaCatalogo(pagina)
+            vista.crear_contenido()
+        contenido = vista._zona
+        encontrados = []
+
+        def recorrer(control):
+            encontrados.append(control)
+            if isinstance(control, (ft.Column, ft.Row)):
+                for hijo in control.controls:
+                    recorrer(hijo)
+            elif isinstance(control, ft.Container):
+                recorrer(control.content)
+
+        recorrer(contenido)
+        self.assertFalse(any(isinstance(x, ft.DataTable) for x in encontrados))
+        textos = " ".join(
+            x.value or "" for x in encontrados if isinstance(x, ft.Text)
+        )
+        self.assertIn("Libro de prueba", textos)
+        botones = [
+            x for x in encontrados if isinstance(x, ft.TextButton)
+        ]
+        self.assertTrue(any(x.content == "Editar libro" for x in botones))
+
+    def test_solicitudes_muestran_estado_y_cancelacion(self):
+        from unittest.mock import patch
+        from interfaces.ventana_solicitudes import VentanaSolicitudes
+        pagina = PaginaFalsa()
+        solicitud = (1, "Ana, Prueba", None, "EJ-1", None,
+                     "Sede Centro", "Sede Norte", "Interbibliotecario",
+                     "Pendiente de traslado")
+        with patch(
+            "interfaces.ventana_solicitudes.PrestamosServicio.listar_socios_habilitados",
+            return_value=[]
+        ), patch(
+            "interfaces.ventana_solicitudes.PrestamosServicio.listar_sedes_activas",
+            return_value=[]
+        ), patch(
+            "interfaces.ventana_solicitudes.PrestamosServicio.listar_ejemplares_disponibles",
+            return_value=[]
+        ), patch(
+            "interfaces.ventana_solicitudes.PrestamosServicio.listar_solicitudes",
+            return_value=[solicitud]
+        ):
+            pantalla = VentanaSolicitudes(pagina, lambda: None)
+            pantalla.crear_contenido()
+        lista = pantalla.crear_contenido() if False else None
+        # Comprobar estructura directamente desde la vista reconstruida.
+        with patch(
+            "interfaces.ventana_solicitudes.PrestamosServicio.listar_socios_habilitados",
+            return_value=[]
+        ), patch(
+            "interfaces.ventana_solicitudes.PrestamosServicio.listar_sedes_activas",
+            return_value=[]
+        ), patch(
+            "interfaces.ventana_solicitudes.PrestamosServicio.listar_ejemplares_disponibles",
+            return_value=[]
+        ), patch(
+            "interfaces.ventana_solicitudes.PrestamosServicio.listar_solicitudes",
+            return_value=[solicitud]
+        ):
+            contenido = pantalla.crear_contenido()
+        encontrados = []
+
+        def recorrer(control):
+            encontrados.append(control)
+            if isinstance(control, (ft.Column, ft.Row)):
+                for hijo in control.controls:
+                    recorrer(hijo)
+            elif isinstance(control, ft.Container):
+                recorrer(control.content)
+
+        recorrer(contenido)
+        self.assertFalse(any(isinstance(x, ft.DataTable) for x in encontrados))
+        textos = " ".join(
+            x.value or "" for x in encontrados if isinstance(x, ft.Text)
+        )
+        self.assertIn("Pendiente de traslado", textos)
+        self.assertIn("Sede Norte", textos)
+        self.assertTrue(any(
+            isinstance(x, ft.TextButton) and x.content == "Cancelar solicitud"
+            for x in encontrados
+        ))
+
 
 if __name__ == "__main__":
     unittest.main()

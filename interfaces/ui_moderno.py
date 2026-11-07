@@ -181,7 +181,7 @@ def instalar_busquedas(control, page):
         ]
         es_listado = any(
             any(p in titulo for p in (
-                "registrad", "remitos", "prestamos", "devoluciones",
+                "registrad", "catalogo", "remitos", "prestamos", "devoluciones",
                 "reservas", "historial de movimientos"
             )) for titulo in titulos
         )
