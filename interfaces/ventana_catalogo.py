@@ -1,5 +1,6 @@
 
 import flet as ft
+from interfaces.ui_moderno import modernizar
 
 from servicios.catalogo_servicio import CatalogoServicio
 
@@ -57,6 +58,7 @@ class VentanaCatalogo:
             self._zona.controls = [self._vista_libros()]
         else:
             self._zona.controls = [self._vista_ejemplares()]
+        modernizar(self._zona, self._page)
 
     def _mensaje(self, titulo, descripcion):
         dialogo = ft.AlertDialog(
