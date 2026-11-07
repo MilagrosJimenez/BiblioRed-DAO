@@ -22,8 +22,8 @@ from interfaces.ui_moderno import (
 class VentanaCompleta(VentanaFlet):
 
     def _crear_estructura(self):
-        self._page.window.width = 1360
-        self._page.window.height = 850
+        self._page.window.width = 1280
+        self._page.window.height = 740
         self._page.bgcolor = FONDO
         self._azul = TINTA
         self._celeste = AZUL
@@ -197,10 +197,14 @@ class VentanaCompleta(VentanaFlet):
             )
 
         accesos = [
-            ("Nueva solicitud", self._mostrar_solicitudes, "DESCRIPTION_OUTLINED"),
-            ("Gestionar reservas", self._mostrar_reservas, "EVENT_AVAILABLE_OUTLINED"),
-            ("Consultar inventario", self._mostrar_inventario, "INVENTORY_2_OUTLINED"),
-            ("Generar reportes", self._mostrar_reportes, "BAR_CHART_OUTLINED"),
+            ("Nueva solicitud", "Solicitudes de préstamo",
+             self._mostrar_solicitudes, "DESCRIPTION_OUTLINED"),
+            ("Gestionar reservas", "Reservas y disponibilidad",
+             self._mostrar_reservas, "EVENT_AVAILABLE_OUTLINED"),
+            ("Consultar inventario", "Inventario por códigos",
+             self._mostrar_inventario, "INVENTORY_2_OUTLINED"),
+            ("Generar reportes", "Reportes",
+             self._mostrar_reportes, "BAR_CHART_OUTLINED"),
         ]
         botones = [
             ft.Container(
@@ -210,14 +214,14 @@ class VentanaCompleta(VentanaFlet):
                 padding=15,
                 expand=True,
                 ink=True,
-                on_click=lambda e, f=accion: f(),
+                on_click=lambda e, n=seccion, f=accion: self._ir_a(n, f),
                 content=ft.Column([
                     ft.Icon(getattr(ft.Icons, icono, ft.Icons.CIRCLE_OUTLINED),
                             color=AZUL, size=25),
                     ft.Text(nombre, color=TINTA,
                             weight=ft.FontWeight.W_500, size=13)
                 ], spacing=12)
-            ) for nombre, accion, icono in accesos
+            ) for nombre, seccion, accion, icono in accesos
         ]
 
         self._contenido.controls = [
