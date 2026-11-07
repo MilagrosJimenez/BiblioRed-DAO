@@ -1,5 +1,6 @@
 
 import flet as ft
+from interfaces.ui_moderno import icono_accion
 
 from servicios.remitos_servicio import RemitosServicio
 
@@ -124,30 +125,17 @@ class VentanaRemitos:
             self._confirmar_cambio(id_remito, estado)
 
         acciones = [
-            ft.TextButton(
-                "Ver historial",
-                on_click=ver_historial
-            )
+            icono_accion("historial", "Ver historial del remito", ver_historial)
         ]
 
         if estado == "Empaquetado":
             acciones.append(
-                ft.Button(
-                    "Despachar",
-                    on_click=avanzar,
-                    bgcolor=self._celeste,
-                    color=self._azul
-                )
+                icono_accion("despachar", "Despachar remito", avanzar)
             )
 
         elif estado == "En tránsito":
             acciones.append(
-                ft.Button(
-                    "Confirmar recepción",
-                    on_click=avanzar,
-                    bgcolor=self._celeste,
-                    color=self._azul
-                )
+                icono_accion("recibir", "Confirmar recepción del remito", avanzar)
             )
 
         return ft.Container(
