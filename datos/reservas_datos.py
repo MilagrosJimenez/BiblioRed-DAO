@@ -149,7 +149,17 @@ def guardar_reserva(reserva):
             WHERE id_socio = ?
               AND id_libro = ?
               AND id_sede = ?
-              AND estado = 'Pendiente'
+              AND (
+                  estado = 'Pendiente'
+                  OR (
+                      estado = 'Atendida'
+                      AND EXISTS (
+                          SELECT 1 FROM solicitudes_prestamo sp
+                          WHERE sp.id_solicitud = reservas.id_solicitud
+                            AND sp.estado NOT IN ('Cancelada', 'Prestada')
+                      )
+                  )
+              )
         """, (
             reserva.id_socio,
             reserva.id_libro,
@@ -158,8 +168,8 @@ def guardar_reserva(reserva):
 
         if cursor.fetchone() is not None:
             raise ValueError(
-                "Este socio ya tiene una reserva pendiente "
-                "para ese título en esa sede"
+                "El socio ya tiene una reserva o una solicitud activa "
+                "de este título en esa sede"
             )
 
         cursor.execute("""
