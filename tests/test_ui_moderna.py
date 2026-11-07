@@ -352,8 +352,8 @@ class PruebasIconosAcciones(unittest.TestCase):
             boton = icono_accion(tipo, "Acción de prueba", lambda e: None)
             self.assertIsInstance(boton, ft.IconButton)
             self.assertEqual(boton.tooltip, "Acción de prueba")
-            self.assertEqual(boton.width, 36)
-            self.assertEqual(boton.height, 36)
+            self.assertEqual(boton.width, 38)
+            self.assertEqual(boton.height, 38)
             self.assertEqual(boton.icon_size, 19)
             self.assertIsNotNone(boton.on_click)
 
