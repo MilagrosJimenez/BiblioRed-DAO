@@ -253,6 +253,7 @@ class VentanaCatalogo:
 
         self._libro = ft.Dropdown(
             label="Libro",
+            width=260,
             options=[
                 ft.DropdownOption(
                     key=str(l[0]),
@@ -264,6 +265,7 @@ class VentanaCatalogo:
 
         self._sede = ft.Dropdown(
             label="Sede",
+            width=260,
             options=[
                 ft.DropdownOption(
                     key=str(s[0]),
