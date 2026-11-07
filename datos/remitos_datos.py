@@ -25,6 +25,34 @@ def crear_tablas_remitos():
         WHERE id_sede_actual IS NULL
     """)
 
+    # id_sede_actual nació como columna agregada a una tabla existente.
+    # SQLite no permite agregarle FK con ALTER TABLE; estos disparadores
+    # validan su referencia sin reconstruir ni poner en riesgo el catálogo.
+    cursor.execute("""
+        CREATE TRIGGER IF NOT EXISTS ubicacion_valida_insert
+        BEFORE INSERT ON ejemplares
+        WHEN NEW.id_sede_actual IS NOT NULL
+             AND NOT EXISTS (
+                 SELECT 1 FROM sedes
+                 WHERE id_sede = NEW.id_sede_actual
+             )
+        BEGIN
+            SELECT RAISE(ABORT, 'La sede actual no existe');
+        END
+    """)
+    cursor.execute("""
+        CREATE TRIGGER IF NOT EXISTS ubicacion_valida_update
+        BEFORE UPDATE OF id_sede_actual ON ejemplares
+        WHEN NEW.id_sede_actual IS NOT NULL
+             AND NOT EXISTS (
+                 SELECT 1 FROM sedes
+                 WHERE id_sede = NEW.id_sede_actual
+             )
+        BEGIN
+            SELECT RAISE(ABORT, 'La sede actual no existe');
+        END
+    """)
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS remitos (
             id_remito INTEGER PRIMARY KEY AUTOINCREMENT,
