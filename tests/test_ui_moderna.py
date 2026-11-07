@@ -105,6 +105,57 @@ class PruebasBuscadores(unittest.TestCase):
         self.assertEqual(ventana._pagina_activa, "Inicio")
         self.assertEqual(len(ventana._page.controls), 1)
 
+    def test_dashboard_sin_expand_en_filas_ajustables(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from interfaces.ventana_completa import VentanaCompleta
+
+        class Pagina:
+            def __init__(self):
+                self.window = SimpleNamespace(width=0, height=0)
+                self.controls = []
+
+            def add(self, control):
+                self.controls.append(control)
+
+            def update(self):
+                pass
+
+        app = VentanaCompleta.__new__(VentanaCompleta)
+        app._page = Pagina()
+        app._contenido = ft.Column([])
+        app._crear_estructura()
+        with patch(
+            "interfaces.ventana_completa.consultar_sedes", return_value=[]
+        ), patch(
+            "interfaces.ventana_completa.consultar_socios", return_value=[]
+        ), patch(
+            "interfaces.ventana_completa.consultar_prestamos", return_value=[]
+        ), patch(
+            "interfaces.ventana_completa.consultar_reservas", return_value=[]
+        ):
+            app._mostrar_inicio()
+
+        filas = []
+        def visitar(control):
+            if isinstance(control, ft.Row):
+                filas.append(control)
+            if isinstance(control, (ft.Row, ft.Column)):
+                for hijo in control.controls:
+                    visitar(hijo)
+            if isinstance(control, ft.Container) and control.content:
+                visitar(control.content)
+
+        visitar(app._contenido)
+        ajustables = [fila for fila in filas if fila.wrap]
+        self.assertGreaterEqual(len(ajustables), 2)
+        for fila in ajustables:
+            for control in fila.controls:
+                self.assertFalse(
+                    getattr(control, "expand", False),
+                    "Una fila con wrap no puede contener tarjetas expandibles"
+                )
+
     def test_button_y_controles_modernos(self):
         panel = ft.Column([
             ft.Container(

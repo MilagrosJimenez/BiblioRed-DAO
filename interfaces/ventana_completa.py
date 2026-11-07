@@ -182,7 +182,7 @@ class VentanaCompleta(VentanaFlet):
 
         def metrica(titulo, valor, subtitulo, icono):
             return ft.Container(
-                expand=True, bgcolor="#FFFFFF",
+                width=236, bgcolor="#FFFFFF",
                 border=ft.Border.all(1, BORDE), border_radius=16, padding=22,
                 content=ft.Column([
                     ft.Row([
@@ -212,7 +212,7 @@ class VentanaCompleta(VentanaFlet):
                 border_radius=11,
                 border=ft.Border.all(1, BORDE),
                 padding=15,
-                expand=True,
+                width=218,
                 ink=True,
                 on_click=lambda e, n=seccion, f=accion: self._ir_a(n, f),
                 content=ft.Column([
