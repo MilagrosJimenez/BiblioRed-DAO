@@ -42,7 +42,7 @@ def texto_visible(control):
     return " ".join(partes)
 
 
-def buscador_de_tabla(tabla, page):
+def buscador_de_tabla(tabla, page, sugerencia):
     """Filtra sin recargar datos. Funciona con letras, dígitos, tildes y Enter."""
     originales = list(tabla.rows)
     cantidad = ft.Text(
@@ -52,7 +52,7 @@ def buscador_de_tabla(tabla, page):
     )
     campo = ft.TextField(
         label="Buscar en esta lista",
-        hint_text="Escribí un nombre, DNI, código, número...",
+        hint_text=sugerencia,
         width=330,
         border_radius=10,
         border_color=BORDE,
@@ -74,12 +74,12 @@ def buscador_de_tabla(tabla, page):
     return ft.Row([campo, cantidad], spacing=12, wrap=True)
 
 
-def buscador_de_tarjetas(columna, page):
+def buscador_de_tarjetas(columna, page, sugerencia):
     originales = list(columna.controls)
     cantidad = ft.Text(f"{len(originales)} elementos", size=11, color=APAGADO)
     campo = ft.TextField(
         label="Buscar en esta lista",
-        hint_text="Filtrar por nombre, número, libro o estado...",
+        hint_text=sugerencia,
         width=330,
         border_radius=10,
         border_color=BORDE,
@@ -151,11 +151,39 @@ def personalizar_controles(control):
         personalizar_controles(control.content)
 
 
+def sugerencia_de_busqueda(titulos):
+    """Descripción de búsqueda acorde a cada listado, sin campos ajenos."""
+    titulos = normalizar(" ".join(titulos))
+    if "sedes registradas" in titulos:
+        return "Buscá por ID, nombre, dirección o estado"
+    if "socios registrados" in titulos:
+        return "Buscá por documento, apellido, nombre o estado"
+    if "catalogo de libros" in titulos:
+        return "Buscá por título, ISBN, autor o disponibilidad"
+    if "ejemplares registrados" in titulos:
+        return "Buscá por código, libro, sede o estado"
+    if "solicitudes registradas" in titulos:
+        return "Buscá por socio, ejemplar, sede, tipo o estado"
+    if "reservas registradas" in titulos:
+        return "Buscá por socio, libro, sede o estado"
+    if "remitos" in titulos:
+        return "Buscá por número, ejemplar, sede o estado"
+    if "prestamos" in titulos or "préstamos" in titulos:
+        return "Buscá por socio, ejemplar o vencimiento"
+    if "devoluciones" in titulos or "retornos" in titulos:
+        return "Buscá por ejemplar, fecha o estado"
+    return "Buscá en los datos de esta sección"
+
+
 def instalar_busquedas(control, page):
     """Busca tablas y colecciones de tarjetas sin tocar su lógica interna."""
     if control is None:
         return
     if isinstance(control, ft.Column):
+        titulos = [
+            c.value for c in control.controls if isinstance(c, ft.Text)
+        ]
+        sugerencia = sugerencia_de_busqueda(titulos)
         # Listados de tablas: título + Row(scroll, DataTable).
         for indice, hijo in enumerate(list(control.controls)):
             if isinstance(hijo, ft.Row):
@@ -170,20 +198,17 @@ def instalar_busquedas(control, page):
                     )
                     if not ya_instalado:
                         control.controls.insert(
-                            indice, buscador_de_tabla(tablas[0], page)
+                            indice, buscador_de_tabla(tablas[0], page, sugerencia)
                         )
                     break
 
         # Listados de tarjetas: título + Column de registros.
-        titulos = [
-            normalizar(c.value) for c in control.controls
-            if isinstance(c, ft.Text)
-        ]
+        titulos_normalizados = [normalizar(t) for t in titulos]
         es_listado = any(
             any(p in titulo for p in (
                 "registrad", "catalogo", "remitos", "prestamos", "devoluciones",
                 "reservas", "historial de movimientos"
-            )) for titulo in titulos
+            )) for titulo in titulos_normalizados
         )
         if es_listado:
             for indice, hijo in enumerate(list(control.controls)):
@@ -199,7 +224,7 @@ def instalar_busquedas(control, page):
                     )
                     if not ya_instalado:
                         control.controls.insert(
-                            indice, buscador_de_tarjetas(hijo, page)
+                            indice, buscador_de_tarjetas(hijo, page, sugerencia)
                         )
                     break
 
