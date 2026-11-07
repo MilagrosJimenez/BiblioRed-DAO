@@ -1,5 +1,6 @@
 
 import flet as ft
+from interfaces.ui_moderno import icono_accion
 from interfaces.ui_moderno import modernizar
 
 from servicios.devoluciones_servicio import DevolucionesServicio
@@ -316,10 +317,7 @@ class VentanaDevoluciones:
                 self._confirmar_avance(n)
 
             acciones = [
-                ft.TextButton(
-                    "Ver historial",
-                    on_click=historial
-                )
+                icono_accion("historial", "Ver historial del retorno", historial)
             ]
 
             if r[6] != "Recibido":
@@ -330,11 +328,9 @@ class VentanaDevoluciones:
                 )
 
                 acciones.append(
-                    ft.Button(
-                        accion,
-                        on_click=avanzar,
-                        bgcolor=self._celeste,
-                        color=self._azul
+                    icono_accion(
+                        "despachar" if r[6] == "Empaquetado" else "recibir",
+                        accion + " del retorno", avanzar
                     )
                 )
 
