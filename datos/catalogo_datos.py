@@ -145,10 +145,13 @@ def consultar_ejemplares():
 
     cursor.execute("""
         SELECT e.id_ejemplar, e.codigo, l.titulo, l.isbn,
-               s.nombre, e.estado, e.id_libro, e.id_sede
+               s.nombre, e.estado, e.id_libro, e.id_sede,
+               COALESCE(actual.nombre, s.nombre) AS ubicacion_actual
         FROM ejemplares e
         JOIN libros l ON e.id_libro = l.id_libro
         JOIN sedes s ON e.id_sede = s.id_sede
+        LEFT JOIN sedes actual
+               ON actual.id_sede = COALESCE(e.id_sede_actual, e.id_sede)
         ORDER BY e.id_ejemplar
     """)
 
