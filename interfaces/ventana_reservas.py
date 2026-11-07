@@ -1,5 +1,6 @@
 
 import flet as ft
+from interfaces.ui_moderno import icono_accion
 from interfaces.ui_moderno import modernizar, normalizar
 
 from servicios.reservas_servicio import ReservasServicio
@@ -298,14 +299,8 @@ class VentanaReservas:
 
             if r[5] == "Pendiente":
                 acciones = [
-                    ft.TextButton(
-                        "Atender",
-                        on_click=atender
-                    ),
-                    ft.TextButton(
-                        "Cancelar",
-                        on_click=cancelar
-                    )
+                    icono_accion("atender", "Atender reserva", atender),
+                    icono_accion("cancelar", "Cancelar reserva", cancelar)
                 ]
 
             texto_solicitud = (
