@@ -119,5 +119,75 @@ class PruebasBuscadores(unittest.TestCase):
         self.assertEqual(panel.controls[0].border_radius, 15)
 
 
+class PruebaNavegacionCompleta(unittest.TestCase):
+    def test_todas_las_pantallas_abren_con_base_temporal(self):
+        import os
+        import tempfile
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from datos import (
+            base_datos, catalogo_datos, prestamos_datos, remitos_datos,
+            prestamos_efectivos_datos, devoluciones_datos, reservas_datos,
+            consultas_bibliored_datos
+        )
+        from interfaces.ventana_completa import VentanaCompleta
+
+        class PaginaFalsa:
+            def __init__(self):
+                self.window = SimpleNamespace(width=0, height=0)
+                self.controls = []
+
+            def add(self, control):
+                self.controls.append(control)
+
+            def update(self):
+                pass
+
+            def show_dialog(self, dialogo):
+                pass
+
+            def pop_dialog(self):
+                pass
+
+        archivo = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        archivo.close()
+        ruta = archivo.name
+        parches = [
+            patch.object(mod, "RUTA_BASE_DATOS", ruta)
+            for mod in (
+                base_datos, catalogo_datos, prestamos_datos, remitos_datos,
+                prestamos_efectivos_datos, devoluciones_datos,
+                reservas_datos, consultas_bibliored_datos,
+            )
+        ]
+        try:
+            for p in parches:
+                p.start()
+            base_datos.crear_tabla_sedes()
+            base_datos.crear_tabla_socios()
+            catalogo_datos.crear_tablas_catalogo()
+            prestamos_datos.crear_tabla_solicitudes()
+            remitos_datos.crear_tablas_remitos()
+            prestamos_efectivos_datos.crear_tabla_prestamos()
+            devoluciones_datos.crear_tablas_devoluciones()
+            reservas_datos.crear_tabla_reservas()
+
+            app = VentanaCompleta(PaginaFalsa())
+            for nombre in (
+                "_mostrar_sedes", "_mostrar_socios", "_mostrar_catalogo",
+                "_mostrar_solicitudes", "_mostrar_remitos",
+                "_mostrar_prestamos", "_mostrar_devoluciones",
+                "_mostrar_reservas", "_mostrar_inventario",
+                "_mostrar_historial_lecturas", "_mostrar_reportes",
+                "_mostrar_inicio"
+            ):
+                with self.subTest(pantalla=nombre):
+                    getattr(app, nombre)()
+        finally:
+            for p in reversed(parches):
+                p.stop()
+            os.unlink(ruta)
+
+
 if __name__ == "__main__":
     unittest.main()
