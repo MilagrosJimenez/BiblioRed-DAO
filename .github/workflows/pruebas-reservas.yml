@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [fix/reservas-disponibilidad-integridad]
+    branches: [fix/reservas-disponibilidad-integridad, design/interfaz-moderna-bibliored]
 
 jobs:
   integridad:
