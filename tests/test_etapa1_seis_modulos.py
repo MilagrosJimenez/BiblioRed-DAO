@@ -134,6 +134,11 @@ class PruebasEtapaUno(unittest.TestCase):
         self.assertEqual(libro[6], 1)
         self.assertEqual(self.servicio_catalogo.listar_ejemplares()[0][5],
                          "Disponible")
+        with sqlite3.connect(self.ruta) as conexion:
+            sede_actual = conexion.execute("""
+                SELECT id_sede_actual FROM ejemplares WHERE codigo = 'DAO-EJ-01'
+            """).fetchone()[0]
+        self.assertEqual(sede_actual, 9001)
 
     def test_solicitud_local_y_cancelacion(self):
         copia = self.crear_copia()
@@ -213,7 +218,7 @@ class PruebasEtapaUno(unittest.TestCase):
         pantalla._mensaje = lambda titulo, texto: dialogos.append((titulo, texto))
         pantalla._mostrar_historial(21)
         self.assertEqual(len(dialogos), 1)
-        self.assertIn("Remito N.º 21", dialogos[0][0])
+        self.assertIn("remito N.º 21", dialogos[0][0])
         self.assertIn("Ejemplar preparado", dialogos[0][1])
         self.assertIn("En tránsito", dialogos[0][1])
 
