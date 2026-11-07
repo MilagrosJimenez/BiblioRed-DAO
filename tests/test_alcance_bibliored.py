@@ -134,6 +134,16 @@ class PruebaConsultas(unittest.TestCase):
             self.assertTrue(columnas)
         self.assertEqual(consultas_bibliored_datos.reporte_disponibilidad()[0][2], 1)
 
+    def test_generar_pdf_real_con_reportlab(self):
+        from servicios.reportes_pdf import generar_reporte
+        archivo = generar_reporte("disponibilidad")
+        try:
+            with open(archivo, "rb") as pdf:
+                self.assertEqual(pdf.read(5), b"%PDF-")
+            self.assertGreater(os.path.getsize(archivo), 1000)
+        finally:
+            os.unlink(archivo)
+
     def test_migracion_observaciones_no_pierde_historial(self):
         with sqlite3.connect(self.ruta) as db:
             for tabla in ("historial_remitos", "historial_retornos"):
