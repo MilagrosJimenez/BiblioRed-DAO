@@ -9,6 +9,7 @@ from interfaces.ventana_remitos import VentanaRemitos
 from interfaces.ventana_prestamos import VentanaPrestamos
 from interfaces.ventana_devoluciones import VentanaDevoluciones
 from interfaces.ventana_reservas import VentanaReservas
+from interfaces.ventana_consultas import VentanaConsultas
 
 
 class VentanaCompleta(VentanaFlet):
@@ -50,7 +51,10 @@ class VentanaCompleta(VentanaFlet):
             ("Remitos y traslados", self._mostrar_remitos),
             ("Préstamos efectivos", self._mostrar_prestamos),
             ("Devoluciones", self._mostrar_devoluciones),
-            ("Reservas y disponibilidad", self._mostrar_reservas)
+            ("Reservas y disponibilidad", self._mostrar_reservas),
+            ("Inventario por códigos", self._mostrar_inventario),
+            ("Historial de lecturas", self._mostrar_historial_lecturas),
+            ("Reportes", self._mostrar_reportes)
         ]
 
         controles_menu = [
@@ -74,23 +78,8 @@ class VentanaCompleta(VentanaFlet):
             )
 
         controles_menu.extend([
-            ft.Container(height=10),
-            ft.Text(
-                "PRÓXIMAMENTE",
-                size=12,
-                weight=ft.FontWeight.BOLD,
-                color="#B6D8EE"
-            ),
-            ft.Text(
-                "Reportes",
-                color="#D2E5F2"
-            ),
             ft.Container(height=12),
-            ft.Text(
-                "DAO 2026 - UTN FRC",
-                size=11,
-                color="#A9C6DA"
-            )
+            ft.Text("DAO 2026 - UTN FRC", size=11, color="#A9C6DA")
         ])
 
         menu = ft.Container(
@@ -231,4 +220,31 @@ class VentanaCompleta(VentanaFlet):
             pantalla.crear_contenido()
         ]
 
+        self._page.update()
+
+    def _mostrar_inventario(self, e=None):
+        pantalla = VentanaConsultas(self._page)
+        self._contenido.controls = [
+            self._crear_titulo("Inventario por códigos",
+                              "Consulta de ejemplares, sede propietaria y ubicación"),
+            pantalla.crear_inventario()
+        ]
+        self._page.update()
+
+    def _mostrar_historial_lecturas(self, e=None):
+        pantalla = VentanaConsultas(self._page)
+        self._contenido.controls = [
+            self._crear_titulo("Historial de lecturas",
+                              "Préstamos y devoluciones por socio"),
+            pantalla.crear_historial()
+        ]
+        self._page.update()
+
+    def _mostrar_reportes(self, e=None):
+        pantalla = VentanaConsultas(self._page)
+        self._contenido.controls = [
+            self._crear_titulo("Reportes de BiblioRed",
+                              "Cuatro informes definidos en el PDF entregado"),
+            pantalla.crear_reportes()
+        ]
         self._page.update()
