@@ -472,14 +472,18 @@ class VentanaFlet:
         hora_inicio = self._hora_desde.value
         hora_fin = self._hora_hasta.value
 
-        if dia_inicio == dia_fin:
-            return f"{dia_inicio} de {hora_inicio} a {hora_fin}"
+        # La hora de cierre menor a la de apertura significa que el
+        # turno termina el día siguiente (por ejemplo, 18:00 a 09:00).
+        aclaracion = " (día siguiente)" if hora_fin < hora_inicio else ""
 
-        # Los días se repiten cada semana; también es válido cruzar
-        # del domingo al lunes.
+        if dia_inicio == dia_fin:
+            return f"{dia_inicio} de {hora_inicio} a {hora_fin}{aclaracion}"
+
+        # Los días son un rango semanal circular: viernes a lunes
+        # también es válido.
         return (
             f"{dia_inicio} a {dia_fin.lower()} "
-            f"de {hora_inicio} a {hora_fin}"
+            f"de {hora_inicio} a {hora_fin}{aclaracion}"
         )
 
     def _mostrar_vista_previa(self, e=None):
@@ -617,12 +621,14 @@ class VentanaFlet:
             # Por ejemplo, viernes a lunes incluye viernes, sábado,
             # domingo y lunes. No se exige que termine en la misma semana.
 
-            # VALIDAR RANGO HORARIO
-            if self._hora_desde.value >= self._hora_hasta.value:
+            # Una hora de cierre anterior a la apertura es un turno
+            # nocturno y se guarda como cierre al día siguiente.
+            # Solo se rechaza la igualdad para evitar ambigüedad
+            # entre 0 y 24 horas de atención.
+            if self._hora_desde.value == self._hora_hasta.value:
                 self._mostrar_mensaje(
                     "Horario inválido",
-                    "La hora de cierre debe ser "
-                    "posterior a la de apertura."
+                    "La hora de apertura y la de cierre no pueden ser iguales."
                 )
                 return
 
