@@ -139,6 +139,9 @@ class PruebasEtapaUno(unittest.TestCase):
                 SELECT id_sede_actual FROM ejemplares WHERE codigo = 'DAO-EJ-01'
             """).fetchone()[0]
         self.assertEqual(sede_actual, 9001)
+        ficha = self.servicio_catalogo.listar_ejemplares()[0]
+        self.assertEqual(ficha[4], "Biblioteca Prueba DAO")
+        self.assertEqual(ficha[8], "Biblioteca Prueba DAO")
 
     def test_solicitud_local_y_cancelacion(self):
         copia = self.crear_copia()
@@ -203,6 +206,9 @@ class PruebasEtapaUno(unittest.TestCase):
                 WHERE id_ejemplar = ?
             """, (copia[0],)).fetchone()
         self.assertEqual(fila, ("Recibido", 9002))
+        ficha = self.servicio_catalogo.listar_ejemplares()[0]
+        self.assertEqual(ficha[4], "Biblioteca Prueba DAO")
+        self.assertEqual(ficha[8], "Biblioteca Norte")
 
     def test_ver_historial_en_pantalla_muestra_observacion(self):
         # Evita la regresión donde el diálogo intentaba desempaquetar
