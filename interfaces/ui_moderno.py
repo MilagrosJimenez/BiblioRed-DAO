@@ -36,8 +36,10 @@ def icono_accion(tipo, descripcion, on_click, disabled=False):
         icon=iconos[tipo],
         tooltip=descripcion,
         icon_size=19,
-        width=36,
-        height=36,
+        icon_color=AZUL_OSCURO,
+        bgcolor="#EDF4FD",
+        width=38,
+        height=38,
         on_click=on_click,
         disabled=disabled,
     )
