@@ -132,12 +132,14 @@ class VentanaCatalogo:
                 ft.Container(
                     bgcolor="#F1F7FC", padding=14, border_radius=11,
                     content=ft.Column([
-                        ft.Row([
-                            ft.Text(datos[2], size=15, weight=ft.FontWeight.BOLD,
-                                    color=self._azul, expand=True),
-                            ft.Text(f"{datos[6]} disponibles / {datos[5]} copias",
-                                    size=11, color="#59758B")
-                        ], wrap=True, spacing=8),
+                        ft.Text(
+                            datos[2], size=15,
+                            weight=ft.FontWeight.BOLD, color=self._azul
+                        ),
+                        ft.Text(
+                            f"{datos[6]} disponibles / {datos[5]} copias",
+                            size=11, color="#59758B"
+                        ),
                         ft.Text(f"ISBN: {datos[1]}  ·  Autor: {datos[3]}",
                                 size=12, color="#59758B"),
                         ft.Row([
