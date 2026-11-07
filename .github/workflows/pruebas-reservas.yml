@@ -1,0 +1,20 @@
+name: Pruebas de reservas y disponibilidad
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [fix/reservas-disponibilidad-integridad]
+
+jobs:
+  integridad:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@v4
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - name: Ejecutar pruebas SQLite sin base real
+        run: python -m unittest discover -s tests -v
