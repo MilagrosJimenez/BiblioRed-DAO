@@ -63,6 +63,14 @@ def crear_tablas_remitos():
         )
     """)
 
+    # Migración segura: agregar observaciones sin perder historiales anteriores.
+    cursor.execute("PRAGMA table_info(historial_remitos)")
+    if "observacion" not in [fila[1] for fila in cursor.fetchall()]:
+        cursor.execute("""
+            ALTER TABLE historial_remitos
+            ADD COLUMN observacion TEXT NOT NULL DEFAULT ''
+        """)
+
     conexion.commit()
     conexion.close()
 
@@ -160,7 +168,7 @@ def consultar_historial_remito(id_remito):
     cursor = conexion.cursor()
 
     cursor.execute("""
-        SELECT estado, fecha
+        SELECT estado, fecha, observacion
         FROM historial_remitos
         WHERE id_remito = ?
         ORDER BY id_historial
@@ -281,8 +289,8 @@ def empaquetar_solicitud(id_solicitud):
 
         cursor.execute("""
             INSERT INTO historial_remitos
-            (id_remito, estado)
-            VALUES (?, 'Empaquetado')
+            (id_remito, estado, observacion)
+            VALUES (?, 'Empaquetado', 'Ejemplar preparado para despacho')
         """, (id_remito,))
 
         conexion.commit()
@@ -450,11 +458,13 @@ def avanzar_remito(id_remito, nuevo_estado):
 
         cursor.execute("""
             INSERT INTO historial_remitos
-            (id_remito, estado)
-            VALUES (?, ?)
+            (id_remito, estado, observacion)
+            VALUES (?, ?, ?)
         """, (
             id_remito,
-            nuevo_estado
+            nuevo_estado,
+            ("Ejemplar despachado" if nuevo_estado == "En tránsito"
+             else "Ejemplar recibido en destino")
         ))
 
         conexion.commit()
