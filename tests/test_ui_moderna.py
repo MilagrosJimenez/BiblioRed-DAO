@@ -183,6 +183,20 @@ class PruebaNavegacionCompleta(unittest.TestCase):
             ):
                 with self.subTest(pantalla=nombre):
                     getattr(app, nombre)()
+
+            # También se prueban las pantallas secundarias que se reconstruyen.
+            from interfaces.ventana_catalogo import VentanaCatalogo
+            from interfaces.ventana_devoluciones import VentanaDevoluciones
+            from interfaces.ventana_reservas import VentanaReservas
+            catalogo = VentanaCatalogo(app._page)
+            catalogo.crear_contenido()
+            catalogo._cambiar_seccion("ejemplares")
+            devoluciones = VentanaDevoluciones(app._page)
+            devoluciones.crear_contenido()
+            devoluciones._cambiar("retornos")
+            reservas = VentanaReservas(app._page)
+            reservas.crear_contenido()
+            reservas._cambiar("reservas")
         finally:
             for p in reversed(parches):
                 p.stop()
