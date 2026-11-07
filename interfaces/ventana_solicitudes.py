@@ -112,12 +112,14 @@ class VentanaSolicitudes:
                 ft.Container(
                     bgcolor="#F1F7FC", padding=14, border_radius=11,
                     content=ft.Column([
-                        ft.Row([
-                            ft.Text(f"Solicitud N.º {datos[0]}",
-                                    weight=ft.FontWeight.BOLD, size=15,
-                                    color=self._azul, expand=True),
-                            ft.Text(datos[8], size=12, color="#59758B")
-                        ], spacing=8, wrap=True),
+                        ft.Text(
+                            f"Solicitud N.º {datos[0]}",
+                            weight=ft.FontWeight.BOLD, size=15,
+                            color=self._azul
+                        ),
+                        ft.Text(
+                            f"Estado: {datos[8]}", size=12, color="#59758B"
+                        ),
                         ft.Text(f"Socio: {datos[1]}  ·  Ejemplar: {datos[3]}",
                                 size=12),
                         ft.Text(f"Origen: {datos[5]}  ·  Destino: {datos[6]}",
