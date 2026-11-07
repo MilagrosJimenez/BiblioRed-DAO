@@ -1,61 +1,53 @@
-
 # BiblioRed - Sistema de Préstamos Interbibliotecarios
 
-Trabajo Práctico Integrador de Desarrollo de Aplicaciones con Objetos (DAO).
+Trabajo Práctico Integrador de DAO - UTN FRC - Grupo 73 (2026).
 
-UTN - Facultad Regional Córdoba | 2026
-
-## Descripción
-
-BiblioRed es un sistema desarrollado en Python para gestionar una red de bibliotecas, sus socios, libros, ejemplares y préstamos interbibliotecarios.
+## Contrato de alcance
+El documento de referencia es `BiblioRed_final_con_reportes.pdf` entregado por el grupo.
+Incluye los diez procesos, State para remitos (ida/retorno), Strategy
+para vencimientos de 7, 14 y 21 días, y cuatro reportes.
+No incluye cálculo de multas.
 
 ## Tecnologías
+Python 3.14, Flet 1.0.5, SQLite y ReportLab.
 
-- Python 3.14
-- Flet 1.0.5
-- SQLite
-- Programación Orientada a Objetos
+## Funcionalidades
+Administrar sedes y socios, catálogo y ejemplares, solicitudes locales
+e interbibliotecarias, remitos, préstamos efectivos, devoluciones,
+reservas, disponibilidad por sede, inventario por código y sede,
+historial de lecturas por socio y cuatro informes PDF.
 
-## Funcionalidades implementadas
+Los cuatro informes son: préstamos activos y vencidos por sede,
+libros más solicitados interbibliotecariamente, disponibilidad del
+catálogo por sede y movimientos con tiempo promedio de tránsito.
 
-- Administración de sedes.
-- Administración de socios.
-- Catálogo de libros y ejemplares.
-- Solicitudes de préstamo.
-- Remitos y traslados interbibliotecarios.
-- Préstamos efectivos.
-- Devoluciones y remitos de regreso.
+## Ejecutar en Windows
+```powershell
+py -m pip install -r requirements.txt
+py main.py
+```
 
-## Funcionalidades pendientes
+Los PDFs se generan en `reportes_generados/`. La base de datos local
+`biblioteca.db` NO se sube a GitHub.
 
-- Reservas y consulta de disponibilidad.
-- Reportes.
-- Patrones de diseño obligatorios.
-- Pruebas integrales y mejoras visuales.
+## Ejecutar pruebas (sin usar biblioteca.db)
+```powershell
+py -m unittest discover -s tests -v
+```
 
-## Instalación
+## Diseño
+- `clases/`: modelos de dominio, EstadoRemito y EstrategiaPlazo.
+- `datos/`: consultas y operaciones SQLite.
+- `servicios/`: casos de uso, generación de PDF.
+- `interfaces/`: pantallas Flet.
+- `main.py`: inicialización.
 
-1. Tener Python instalado.
-2. Abrir una terminal en la carpeta del proyecto.
-3. Instalar las dependencias:
+Al arrancar, el programa agrega automáticamente el campo
+`observacion` a historiales existentes sin eliminar filas.
+No se crean tablas nuevas para los patrones: son clases de dominio.
 
-    py -m pip install -r requirements.txt
-
-4. Ejecutar la aplicación:
-
-    py main.py
-
-La base de datos SQLite se crea automáticamente al iniciar el sistema.
-
-## Organización
-
-- clases/: clases del dominio.
-- datos/: persistencia con SQLite.
-- servicios/: lógica de negocio.
-- interfaces/: interfaz gráfica con Flet.
-- imagenes/: recursos visuales.
-- main.py: punto de entrada.
-
-## Estado del proyecto
-
-En desarrollo.
+## Verificación
+Las pruebas automatizadas cubren reglas de prioridad, estados,
+vencimientos, integridad básica, consultas y migraciones.
+La interfaz gráfica y un recorrido completo con datos reales
+se deben verificar también en la aplicación local.
