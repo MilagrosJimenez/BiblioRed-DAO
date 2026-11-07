@@ -2,7 +2,7 @@
 from clases.solicitud_prestamo import SolicitudPrestamo
 
 from datos.base_datos import consultar_sedes, consultar_socios
-from datos.catalogo_datos import consultar_ejemplares
+from datos.prestamos_datos import consultar_ejemplares_solicitables
 
 from datos.prestamos_datos import (
     consultar_solicitudes,
@@ -32,16 +32,7 @@ class PrestamosServicio:
         return sedes
 
     def listar_ejemplares_disponibles(self):
-        ejemplares = []
-        sedes_activas = self.listar_sedes_activas()
-
-        for ejemplar in consultar_ejemplares():
-            if ejemplar[5] == "Disponible":
-                for sede in sedes_activas:
-                    if sede[0] == ejemplar[7]:
-                        ejemplares.append(ejemplar)
-
-        return ejemplares
+        return consultar_ejemplares_solicitables()
 
     def listar_solicitudes(self):
         return consultar_solicitudes()
