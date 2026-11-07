@@ -8,6 +8,7 @@ from interfaces.ventana_solicitudes import VentanaSolicitudes
 from interfaces.ventana_remitos import VentanaRemitos
 from interfaces.ventana_prestamos import VentanaPrestamos
 from interfaces.ventana_devoluciones import VentanaDevoluciones
+from interfaces.ventana_reservas import VentanaReservas
 
 
 class VentanaCompleta(VentanaFlet):
@@ -48,7 +49,8 @@ class VentanaCompleta(VentanaFlet):
             ("Solicitudes de préstamo", self._mostrar_solicitudes),
             ("Remitos y traslados", self._mostrar_remitos),
             ("Préstamos efectivos", self._mostrar_prestamos),
-            ("Devoluciones", self._mostrar_devoluciones)
+            ("Devoluciones", self._mostrar_devoluciones),
+            ("Reservas y disponibilidad", self._mostrar_reservas)
         ]
 
         controles_menu = [
@@ -78,10 +80,6 @@ class VentanaCompleta(VentanaFlet):
                 size=12,
                 weight=ft.FontWeight.BOLD,
                 color="#B6D8EE"
-            ),
-            ft.Text(
-                "Reservas y disponibilidad",
-                color="#D2E5F2"
             ),
             ft.Text(
                 "Reportes",
@@ -123,7 +121,10 @@ class VentanaCompleta(VentanaFlet):
 
         self._page.add(
             ft.Column(
-                controls=[encabezado, cuerpo],
+                controls=[
+                    encabezado,
+                    cuerpo
+                ],
                 spacing=0,
                 expand=True
             )
@@ -213,6 +214,19 @@ class VentanaCompleta(VentanaFlet):
             self._crear_titulo(
                 "Devoluciones",
                 "Estado físico, cierre de préstamos y retorno de ejemplares"
+            ),
+            pantalla.crear_contenido()
+        ]
+
+        self._page.update()
+
+    def _mostrar_reservas(self, e=None):
+        pantalla = VentanaReservas(self._page)
+
+        self._contenido.controls = [
+            self._crear_titulo(
+                "Reservas y disponibilidad",
+                "Consulta de ejemplares y gestión de reservas por sede"
             ),
             pantalla.crear_contenido()
         ]
