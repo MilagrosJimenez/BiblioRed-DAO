@@ -217,6 +217,7 @@ class VentanaCompleta(VentanaFlet):
 
     def _filtrar_global(self, e=None):
         consulta = (self._buscador_general.value or "").strip()
+        self._panel_actividad.visible = not bool(consulta)
         if not consulta:
             self._resultados_global.controls = []
             self._panel_resultados.visible = False
@@ -300,7 +301,7 @@ class VentanaCompleta(VentanaFlet):
         self._resultado_resumen = ft.Text("", color=APAGADO, size=11)
         self._resultados_global = ft.Column(spacing=5)
         self._panel_resultados = ft.Container(
-            visible=False, bgcolor="#FFFFFF",
+            visible=False, width=ANCHO, bgcolor="#FFFFFF",
             border=ft.Border.all(1, BORDE), border_radius=13, padding=12,
             content=ft.Column([
                 self._resultado_resumen, self._resultados_global
