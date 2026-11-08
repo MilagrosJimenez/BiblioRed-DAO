@@ -14,51 +14,86 @@ class VentanaCatalogo:
         self._azul = "#153D63"
         self._celeste = "#63BDEB"
         self._seccion = "libros"
+        self._modo = "consultar"
         self._editando_id = None
         self._isbn_edicion = ""
 
     def crear_contenido(self):
-        self._zona = ft.Column(
-            controls=[],
-            spacing=15
+        self._zona = ft.Column(controls=[], spacing=14)
+        self._boton_libros = ft.Button(
+            "Libros", on_click=lambda e: self._cambiar_seccion("libros")
+        )
+        self._boton_ejemplares = ft.Button(
+            "Ejemplares físicos",
+            on_click=lambda e: self._cambiar_seccion("ejemplares")
+        )
+        self._boton_registrar = ft.Button(
+            "Registrar libro",
+            on_click=lambda e: self._cambiar_modo("registrar")
+        )
+        self._boton_consultar = ft.Button(
+            "Consultar libros",
+            on_click=lambda e: self._cambiar_modo("consultar")
         )
         self._dibujar()
+        return ft.Column([
+            ft.Row([
+                ft.Text("Sección", color="#667B93", size=12),
+                self._boton_libros, self._boton_ejemplares
+            ], spacing=10),
+            ft.Row([
+                self._boton_registrar, self._boton_consultar
+            ], spacing=12),
+            self._zona
+        ], spacing=13)
 
-        return ft.Column(
-            controls=[
-                ft.Row(
-                    controls=[
-                        ft.Button(
-                            "Libros",
-                            on_click=lambda e: self._cambiar_seccion("libros"),
-                            bgcolor="#BCE7FF",
-                            color=self._azul
-                        ),
-                        ft.Button(
-                            "Ejemplares físicos",
-                            on_click=lambda e: self._cambiar_seccion("ejemplares"),
-                            bgcolor="#BCE7FF",
-                            color=self._azul
-                        )
-                    ],
-                    spacing=12
-                ),
-                self._zona
-            ],
-            spacing=16
+    def _actualizar_botones(self):
+        self._boton_registrar.content = (
+            "Registrar libro" if self._seccion == "libros"
+            else "Registrar ejemplar"
         )
+        self._boton_consultar.content = (
+            "Consultar libros" if self._seccion == "libros"
+            else "Consultar ejemplares"
+        )
+        for boton, activo in (
+            (self._boton_libros, self._seccion == "libros"),
+            (self._boton_ejemplares, self._seccion == "ejemplares"),
+            (self._boton_registrar, self._modo == "registrar"),
+            (self._boton_consultar, self._modo == "consultar"),
+        ):
+            boton.bgcolor = "#2563EB" if activo else "#FFFFFF"
+            boton.color = "#FFFFFF" if activo else "#142B49"
 
     def _cambiar_seccion(self, seccion):
         self._seccion = seccion
+        self._modo = "consultar"
         self._editando_id = None
         self._dibujar()
         self._page.update()
 
+    def _cambiar_modo(self, modo):
+        self._modo = modo
+        self._actualizar_botones()
+        elegido = self._formulario if modo == "registrar" else self._listado
+        self._zona.controls = [ft.Row([elegido], spacing=0)]
+        self._page.update()
+
     def _dibujar(self):
-        if self._seccion == "libros":
-            self._zona.controls = [self._vista_libros()]
-        else:
-            self._zona.controls = [self._vista_ejemplares()]
+        vista = (self._vista_libros() if self._seccion == "libros"
+                 else self._vista_ejemplares())
+        self._formulario, self._listado = vista.controls
+        self._formulario.width = 585
+        self._formulario.expand = False
+        if isinstance(self._formulario.content, ft.Column):
+            for control in self._formulario.content.controls:
+                if isinstance(control, (ft.TextField, ft.Dropdown)):
+                    control.width = 525
+        self._listado.width = None
+        self._listado.expand = True
+        self._actualizar_botones()
+        elegido = self._formulario if self._modo == "registrar" else self._listado
+        self._zona.controls = [ft.Row([elegido], spacing=0)]
         modernizar(self._zona, self._page)
 
     def _mensaje(self, titulo, descripcion):
@@ -213,6 +248,7 @@ class VentanaCatalogo:
             return
 
         self._editando_id = None
+        self._modo = "consultar"
         self._dibujar()
         self._page.update()
 
@@ -231,6 +267,7 @@ class VentanaCatalogo:
         self._titulo_formulario.value = "Modificar libro"
         self._boton_guardar.content = "Guardar cambios"
         self._boton_cancelar.visible = True
+        self._cambiar_modo("registrar")
 
         self._page.update()
 
@@ -393,6 +430,7 @@ class VentanaCatalogo:
             self._mensaje("Datos inválidos", str(error))
             return
 
+        self._modo = "consultar"
         self._dibujar()
         self._page.update()
 
