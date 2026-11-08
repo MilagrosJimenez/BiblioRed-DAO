@@ -214,6 +214,66 @@ class PruebasBuscadores(unittest.TestCase):
         self.assertEqual(panel.controls[0].border_radius, 15)
 
 
+class PruebasDistribucionFinal(unittest.TestCase):
+    def test_listado_usa_ancho_y_mantiene_encabezado_durante_busqueda(self):
+        from interfaces.diseno_pantallas import preparar_listado_tabla, ANCHO
+
+        tabla = ft.DataTable(
+            columns=[
+                ft.DataColumn(ft.Text("ID")),
+                ft.DataColumn(ft.Text("Nombre")),
+            ],
+            rows=[
+                ft.DataRow(cells=[
+                    ft.DataCell(ft.Text("9001")),
+                    ft.DataCell(ft.Text("Biblioteca Centro"))
+                ]),
+                ft.DataRow(cells=[
+                    ft.DataCell(ft.Text("9002")),
+                    ft.DataCell(ft.Text("Biblioteca Norte"))
+                ]),
+            ]
+        )
+        panel = ft.Container(content=ft.Column([
+            ft.Text("Sedes registradas"),
+            ft.Row([tabla])
+        ]))
+        preparar_listado_tabla(panel, [1, 4], PaginaFalsa())
+        self.assertEqual(panel.width, ANCHO)
+        controles = panel.content.controls
+        self.assertIsInstance(controles[2], ft.Container)
+        filas = controles[3]
+        self.assertEqual(len(filas.controls), 2)
+        buscador = controles[1].controls[0]
+        self.assertIn("dirección", buscador.hint_text)
+        buscador.value = "9002"
+        buscador.on_change(None)
+        self.assertEqual(len(filas.controls), 1)
+        self.assertIsInstance(controles[2], ft.Container)
+        self.assertIn("9002",
+                      str(filas.controls[0].content.controls[0].content.value))
+
+    def test_formulario_socios_agrupado_no_deja_media_pantalla_vacia(self):
+        from unittest.mock import patch
+        from interfaces.diseno_pantallas import (
+            preparar_formulario_socios, ANCHO
+        )
+        from interfaces.ventana_socios import VentanaSocios
+
+        with patch("interfaces.ventana_socios.consultar_socios",
+                   return_value=[]):
+            pantalla = VentanaSocios(PaginaFalsa(), lambda: None)
+            vista = pantalla.crear_contenido()
+        formulario = vista.controls[0]
+        preparar_formulario_socios(formulario, pantalla)
+        self.assertEqual(formulario.width, ANCHO)
+        self.assertEqual(len(formulario.content.controls), 5)
+        self.assertEqual(
+            formulario.content.controls[1].controls[0],
+            pantalla._campo_documento
+        )
+
+
 class PruebaRangoSemanalSedes(unittest.TestCase):
     def test_viernes_a_lunes_es_valido_y_se_guarda(self):
         from types import SimpleNamespace
