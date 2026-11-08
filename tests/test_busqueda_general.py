@@ -39,8 +39,7 @@ class PruebasBusquedaGlobal(unittest.TestCase):
             patch("interfaces.busqueda_general." + nombre, return_value=filas)
             for nombre, filas in datos.items()
         ]
-        for p in self.parches:
-            p.start()
+        self.mocks = [p.start() for p in self.parches]
 
     def tearDown(self):
         for p in reversed(self.parches):
@@ -60,8 +59,8 @@ class PruebasBusquedaGlobal(unittest.TestCase):
 
     def test_cadena_vacia_no_hace_busqueda(self):
         self.assertEqual(buscar_en_bibliored(""), [])
-        for p in self.parches:
-            p.assert_not_called()
+        for mock in self.mocks:
+            mock.assert_not_called()
 
     def test_limite_y_destinos(self):
         resultados = buscar_en_bibliored("biblioteca", limite=3)
