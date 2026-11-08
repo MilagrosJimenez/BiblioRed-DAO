@@ -17,7 +17,7 @@ from interfaces.ventana_consultas import VentanaConsultas
 from interfaces.ui_moderno import (
     modernizar, AZUL, AZUL_OSCURO, TINTA, APAGADO, FONDO, BORDE
 )
-from interfaces.busqueda_general import buscar_en_bibliored
+from interfaces.busqueda_general import buscar_secciones
 from interfaces.diseno_pantallas import (
     ANCHO, centrar, preparar_formulario_sedes, preparar_formulario_socios,
     preparar_formulario_solicitudes, preparar_formulario_remitos,
@@ -197,62 +197,59 @@ class VentanaCompleta(VentanaFlet):
             return VentanaCompleta._encontrar_buscador(control.content)
         return None
 
-    def _abrir_resultado(self, resultado):
-        nombre = resultado["destino"]
-        if resultado["tipo"] == "Ejemplar":
-            self._catalogo_inicial = "ejemplares"
-        elif resultado["tipo"] == "Libro":
-            self._catalogo_inicial = "libros"
+    def _abrir_seccion(self, nombre):
+        """Usa exactamente la navegación del menú lateral."""
+        item = self._nav_items.get(nombre)
+        if item is not None:
+            item.on_click(None)
 
-        self._modos[nombre] = "consultar"
-        self._filtro_pendiente = (self._buscador_general.value or "").strip()
-        acciones = {
-            "Administrar sedes": self._mostrar_sedes,
-            "Administrar socios": self._mostrar_socios,
-            "Catálogo y ejemplares": self._mostrar_catalogo,
-            "Solicitudes de préstamo": self._mostrar_solicitudes,
-            "Remitos y traslados": self._mostrar_remitos,
-        }
-        self._ir_a(nombre, acciones[nombre])
+    def _abrir_primera_coincidencia(self, e=None):
+        """Enter abre la primera sección encontrada."""
+        if self._coincidencias_menu:
+            self._abrir_seccion(self._coincidencias_menu[0])
 
     def _filtrar_global(self, e=None):
         consulta = (self._buscador_general.value or "").strip()
         self._panel_actividad.visible = not bool(consulta)
+
         if not consulta:
+            self._coincidencias_menu = []
             self._resultados_global.controls = []
             self._panel_resultados.visible = False
             self._panel_accesos.visible = True
         else:
-            encontrados = buscar_en_bibliored(consulta, limite=4)
+            # La fuente es el menú real, no las tablas de SQLite.
+            coincidencias = buscar_secciones(
+                consulta, self._nav_items.keys(), limite=6
+            )
+            self._coincidencias_menu = coincidencias
             self._panel_resultados.visible = True
             self._panel_accesos.visible = False
             self._resultado_resumen.value = (
-                f"{len(encontrados)} resultados mostrados"
-                if encontrados else "Sin coincidencias"
+                f"{len(coincidencias)} secciones encontradas"
+                if coincidencias else "No hay secciones con ese nombre"
             )
             self._resultados_global.controls = [
                 ft.Container(
                     bgcolor="#F5F9FD",
                     border=ft.Border.all(1, BORDE),
                     border_radius=9,
-                    padding=ft.Padding.symmetric(horizontal=13, vertical=8),
-                    on_click=lambda ev, dato=dato: self._abrir_resultado(dato),
+                    padding=ft.Padding.symmetric(horizontal=13, vertical=9),
+                    on_click=lambda ev, n=nombre: self._abrir_seccion(n),
                     ink=True,
                     content=ft.Row([
-                        ft.Icon(ft.Icons.SEARCH, color=AZUL, size=17),
-                        ft.Text(dato["tipo"], color=AZUL, size=11, width=72),
-                        ft.Text(dato["titulo"], color=TINTA, size=13,
-                                weight=ft.FontWeight.BOLD, expand=True,
-                                max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
-                        ft.Text(dato["detalle"], color=APAGADO, size=11,
-                                width=285, max_lines=1,
-                                overflow=ft.TextOverflow.ELLIPSIS),
+                        ft.Icon(ft.Icons.GRID_VIEW_OUTLINED, color=AZUL, size=19),
+                        ft.Text(
+                            nombre, color=TINTA, size=14,
+                            weight=ft.FontWeight.W_500, expand=True
+                        ),
+                        ft.Text("Abrir sección", color=APAGADO, size=12),
                         ft.Icon(ft.Icons.ARROW_FORWARD_IOS, size=13, color=AZUL)
-                    ], spacing=9)
+                    ], spacing=11)
                 )
-                for dato in encontrados
+                for nombre in coincidencias
             ] or [
-                ft.Text("No encontramos registros con ese texto.",
+                ft.Text("Probá con socios, sedes, catálogo o reportes.",
                         size=13, color=APAGADO)
             ]
         self._page.update()
@@ -285,9 +282,10 @@ class VentanaCompleta(VentanaFlet):
                 ], spacing=3)
             )
 
+        self._coincidencias_menu = []
         self._buscador_general = ft.TextField(
-            label="Buscar en todo BiblioRed",
-            hint_text="Nombre, documento, sede, título, ISBN, ejemplar o remito…",
+            label="Buscar una sección",
+            hint_text="Ej.: socios, sedes, catálogo, solicitudes, reportes…",
             prefix_icon=ft.Icons.SEARCH,
             border_radius=12,
             border_color=BORDE,
@@ -296,7 +294,7 @@ class VentanaCompleta(VentanaFlet):
             height=56,
             width=ANCHO,
             on_change=self._filtrar_global,
-            on_submit=self._filtrar_global,
+            on_submit=self._abrir_primera_coincidencia,
         )
         self._resultado_resumen = ft.Text("", color=APAGADO, size=11)
         self._resultados_global = ft.Column(spacing=5)

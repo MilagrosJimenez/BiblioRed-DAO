@@ -1,76 +1,68 @@
-"""El buscador global debe trabajar sobre datos reales sin modificar SQLite."""
+"""El buscador de Inicio navega por las 12 secciones del menú lateral."""
 import unittest
-from unittest.mock import patch
 
-from interfaces.busqueda_general import buscar_en_bibliored
+from interfaces.busqueda_general import buscar_secciones
 
 
-class PruebasBusquedaGlobal(unittest.TestCase):
-    def setUp(self):
-        datos = {
-            "consultar_sedes": [
-                (9001, "Biblioteca Prueba DAO", "Calle Centro 100",
-                 "351", "Lunes a viernes", 1)
-            ],
-            "consultar_socios": [
-                (1, "99001234", "Lucía", "Torres", "351", "", 1)
-            ],
-            "consultar_libros": [
-                (1, "9780000000001", "Ingeniería de objetos",
-                 "Autora Prueba", "Editorial", 1, 1)
-            ],
-            "consultar_ejemplares": [
-                (1, "EJ-001", "Ingeniería de objetos", "9780000000001",
-                 "Biblioteca Prueba DAO", "Disponible", 1, 9001,
-                 "Biblioteca Prueba DAO")
-            ],
-            "consultar_solicitudes": [
-                (2, "Torres, Lucía", "99001234", "EJ-001", "Ingeniería de objetos",
-                 "Biblioteca Prueba DAO", "Biblioteca Norte",
-                 "Interbibliotecario", "Pendiente de traslado", "2026-11-07")
-            ],
-            "consultar_remitos": [
-                (4, "EJ-001", "Ingeniería de objetos", "Biblioteca Prueba DAO",
-                 "Biblioteca Norte", "En tránsito", "2026-11-07",
-                 2, 1, 9001, 9002)
-            ],
-        }
-        self.parches = [
-            patch("interfaces.busqueda_general." + nombre, return_value=filas)
-            for nombre, filas in datos.items()
-        ]
-        self.mocks = [p.start() for p in self.parches]
+SECCIONES = [
+    "Inicio",
+    "Administrar sedes",
+    "Administrar socios",
+    "Catálogo y ejemplares",
+    "Solicitudes de préstamo",
+    "Remitos y traslados",
+    "Préstamos efectivos",
+    "Devoluciones",
+    "Reservas y disponibilidad",
+    "Inventario por códigos",
+    "Historial de lecturas",
+    "Reportes",
+]
 
-    def tearDown(self):
-        for p in reversed(self.parches):
-            p.stop()
 
-    def test_busca_por_nombre_con_tilde_ignorada(self):
-        encontrados = buscar_en_bibliored("lucia")
-        self.assertTrue(any(r["tipo"] == "Socio" for r in encontrados))
-        self.assertTrue(any(r["tipo"] == "Solicitud" for r in encontrados))
+class PruebasBusquedaDeSecciones(unittest.TestCase):
+    def test_filtra_por_fragmentos(self):
+        self.assertEqual(
+            buscar_secciones("soc", SECCIONES),
+            ["Administrar socios"],
+        )
+        self.assertEqual(
+            buscar_secciones("sed", SECCIONES),
+            ["Administrar sedes"],
+        )
 
-    def test_busca_por_digito_en_identificadores(self):
-        encontrados = buscar_en_bibliored("9001")
-        self.assertTrue(any(r["tipo"] == "Sede" for r in encontrados))
-        encontrados = buscar_en_bibliored("EJ-001")
-        self.assertTrue(any(r["tipo"] == "Ejemplar" for r in encontrados))
-        self.assertTrue(any(r["tipo"] == "Remito" for r in encontrados))
+    def test_ignora_mayusculas_y_tildes(self):
+        self.assertEqual(
+            buscar_secciones("CATALOGO", SECCIONES),
+            ["Catálogo y ejemplares"],
+        )
+        self.assertEqual(
+            buscar_secciones("prestamo", SECCIONES),
+            ["Solicitudes de préstamo", "Préstamos efectivos"],
+        )
 
-    def test_cadena_vacia_no_hace_busqueda(self):
-        self.assertEqual(buscar_en_bibliored(""), [])
-        for mock in self.mocks:
-            mock.assert_not_called()
+    def test_incluye_todos_los_modulos_del_menu(self):
+        self.assertEqual(buscar_secciones("report", SECCIONES), ["Reportes"])
+        self.assertEqual(
+            buscar_secciones("reserv", SECCIONES),
+            ["Reservas y disponibilidad"],
+        )
+        self.assertEqual(
+            buscar_secciones("devol", SECCIONES),
+            ["Devoluciones"],
+        )
 
-    def test_limite_y_destinos(self):
-        resultados = buscar_en_bibliored("biblioteca", limite=3)
-        self.assertLessEqual(len(resultados), 3)
-        self.assertTrue(all(
-            r["destino"] in (
-                "Administrar sedes", "Administrar socios", "Catálogo y ejemplares",
-                "Solicitudes de préstamo", "Remitos y traslados"
-            ) for r in resultados
-        ))
+    def test_no_busca_documentos_ni_registros(self):
+        self.assertEqual(buscar_secciones("99001234", SECCIONES), [])
+        self.assertEqual(buscar_secciones("biblioteca centro", SECCIONES), [])
+
+    def test_vacio_limite_y_sin_coincidencias(self):
+        self.assertEqual(buscar_secciones("", SECCIONES), [])
+        self.assertEqual(buscar_secciones("  ", SECCIONES), [])
+        self.assertEqual(buscar_secciones("zzzzz", SECCIONES), [])
+        self.assertEqual(buscar_secciones("administrar", SECCIONES, limite=1),
+                         ["Administrar sedes"])
+        self.assertEqual(buscar_secciones("administrar", SECCIONES, limite=0), [])
 
 
 if __name__ == "__main__":
