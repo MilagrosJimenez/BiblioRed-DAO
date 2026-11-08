@@ -471,7 +471,7 @@ class VentanaCompleta(VentanaFlet):
         encabezado, fila = self._contenido.controls
         formulario, listado = fila.controls
         preparar_formulario_sedes(formulario, self)
-        preparar_listado_tabla(listado, [1, 3, 3, 2, 2])
+        preparar_listado_tabla(listado, [1, 3, 3, 2, 2], self._page)
         self._presentar_modulo(
             "Administrar sedes", encabezado, fila,
             "Registrar nueva sede", "Consultar sedes"
@@ -496,7 +496,7 @@ class VentanaCompleta(VentanaFlet):
 
         pantalla._cargar_edicion = editar_y_mostrar
         preparar_formulario_socios(vista.controls[0], pantalla)
-        preparar_listado_tabla(vista.controls[1], [2, 4, 2, 3])
+        preparar_listado_tabla(vista.controls[1], [2, 4, 2, 3], self._page)
         self._presentar_modulo(
             "Administrar socios",
             self._crear_titulo("Administrar socios",
