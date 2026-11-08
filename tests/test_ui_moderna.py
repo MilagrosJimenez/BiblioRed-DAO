@@ -602,32 +602,29 @@ class PruebaNavegacionCompleta(unittest.TestCase):
             app._mostrar_inicio()
             self.assertIsNone(app._contenido.scroll)
             self.assertEqual(app._buscador_general.label,
-                             "Buscar en todo BiblioRed")
+                             "Buscar una sección")
 
-            # Buscar al escribir y pulsar un resultado lleva a consultar
-            # el módulo correcto sin crear otra ventana.
-            from unittest.mock import patch as _patch_busqueda
-            resultado = {
-                "tipo": "Sede",
-                "titulo": "Biblioteca Prueba",
-                "detalle": "ID 9001",
-                "destino": "Administrar sedes"
-            }
-            with _patch_busqueda(
-                "interfaces.ventana_completa.buscar_en_bibliored",
-                return_value=[resultado]
-            ):
-                app._buscador_general.value = "9001"
-                app._buscador_general.on_change(None)
+            # Las coincidencias provienen de las opciones del menú, no
+            # de socios, libros o sedes que estén cargados en SQLite.
+            app._buscador_general.value = "soc"
+            app._buscador_general.on_change(None)
             self.assertTrue(app._panel_resultados.visible)
             self.assertFalse(app._panel_accesos.visible)
+            self.assertEqual(app._coincidencias_menu, ["Administrar socios"])
             self.assertEqual(len(app._resultados_global.controls), 1)
-            app._abrir_resultado(resultado)
+
+            # Clic abre la misma pantalla que el menú lateral.
+            app._resultados_global.controls[0].on_click(None)
+            self.assertEqual(app._pagina_activa, "Administrar socios")
+            self.assertEqual(app._modulo_actual, "Administrar socios")
+
+            # Enter abre la primera coincidencia, sin filtrar registros.
+            app._mostrar_inicio()
+            app._buscador_general.value = "sed"
+            app._buscador_general.on_change(None)
+            app._buscador_general.on_submit(None)
             self.assertEqual(app._pagina_activa, "Administrar sedes")
-            self.assertEqual(app._modos["Administrar sedes"], "consultar")
-            filtro = app._encontrar_buscador(app._contenido)
-            self.assertIsNotNone(filtro)
-            self.assertEqual(filtro.value, "9001")
+            self.assertEqual(app._modulo_actual, "Administrar sedes")
 
             # También se prueban las pantallas secundarias que se reconstruyen.
             from interfaces.ventana_catalogo import VentanaCatalogo
