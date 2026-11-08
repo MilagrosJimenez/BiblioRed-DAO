@@ -461,13 +461,44 @@ class PruebaNavegacionCompleta(unittest.TestCase):
                         self.assertEqual(app._hora_desde.label, "Desde")
                         self.assertEqual(app._hora_hasta.label, "Hasta")
 
+            # La nueva navegación separa formulario y consulta, sin duplicarlos.
+            app._mostrar_sedes()
+            self.assertEqual(len(app._modulo_zona.controls), 1)
+            self.assertIs(app._modulo_zona.controls[0].controls[0],
+                          app._modulo_listado)
+            app._cambiar_modo("Administrar sedes", "registrar")
+            self.assertIs(app._modulo_zona.controls[0].controls[0],
+                          app._modulo_formulario)
+            app._mostrar_socios()
+            app._cambiar_modo("Administrar socios", "consultar")
+            self.assertIs(app._modulo_zona.controls[0].controls[0],
+                          app._modulo_listado)
+            app._mostrar_solicitudes()
+            app._cambiar_modo("Solicitudes de préstamo", "registrar")
+            self.assertIs(app._modulo_zona.controls[0].controls[0],
+                          app._modulo_formulario)
+            app._mostrar_remitos()
+            self.assertIs(app._modulo_zona.controls[0].controls[0],
+                          app._modulo_listado)
+            app._mostrar_inicio()
+            self.assertIsNone(app._contenido.scroll)
+            self.assertEqual(app._buscador_general.label,
+                             "Buscar en todo BiblioRed")
+
             # También se prueban las pantallas secundarias que se reconstruyen.
             from interfaces.ventana_catalogo import VentanaCatalogo
             from interfaces.ventana_devoluciones import VentanaDevoluciones
             from interfaces.ventana_reservas import VentanaReservas
             catalogo = VentanaCatalogo(app._page)
             catalogo.crear_contenido()
+            self.assertEqual(catalogo._modo, "consultar")
+            self.assertIs(catalogo._zona.controls[0].controls[0],
+                          catalogo._listado)
+            catalogo._cambiar_modo("registrar")
+            self.assertIs(catalogo._zona.controls[0].controls[0],
+                          catalogo._formulario)
             catalogo._cambiar_seccion("ejemplares")
+            self.assertEqual(catalogo._modo, "consultar")
             devoluciones = VentanaDevoluciones(app._page)
             devoluciones.crear_contenido()
             devoluciones._cambiar("retornos")
