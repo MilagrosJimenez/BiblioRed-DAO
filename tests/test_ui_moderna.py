@@ -180,13 +180,21 @@ class PruebasBuscadores(unittest.TestCase):
 
         visitar(app._contenido)
         ajustables = [fila for fila in filas if fila.wrap]
-        self.assertGreaterEqual(len(ajustables), 2)
         for fila in ajustables:
             for control in fila.controls:
                 self.assertFalse(
                     getattr(control, "expand", False),
                     "Una fila con wrap no puede contener tarjetas expandibles"
                 )
+        filas_cuatro = [
+            fila for fila in filas
+            if len(fila.controls) == 4
+            and all(isinstance(c, ft.Container) for c in fila.controls)
+        ]
+        self.assertGreaterEqual(len(filas_cuatro), 2)
+        self.assertTrue(all(
+            not fila.wrap for fila in filas_cuatro
+        ))
 
     def test_button_y_controles_modernos(self):
         panel = ft.Column([
@@ -454,12 +462,61 @@ class PruebaNavegacionCompleta(unittest.TestCase):
                     getattr(app, nombre)()
                     if nombre == "_mostrar_sedes":
                         self.assertEqual(app._campo_id.label, "ID")
-                        self.assertEqual(app._campo_id.width, 109)
-                        self.assertEqual(app._campo_telefono.width, 174)
+                        self.assertEqual(app._campo_id.width, 185)
+                        self.assertEqual(app._campo_telefono.width, 325)
                         self.assertEqual(app._dia_desde.label, "Desde")
                         self.assertEqual(app._dia_hasta.label, "Hasta")
                         self.assertEqual(app._hora_desde.label, "Desde")
                         self.assertEqual(app._hora_hasta.label, "Hasta")
+
+            # La nueva navegación separa formulario y consulta, sin duplicarlos.
+            app._mostrar_sedes()
+            self.assertEqual(len(app._modulo_zona.controls), 1)
+            self.assertIs(app._modulo_zona.controls[0].controls[0],
+                          app._modulo_listado)
+            app._cambiar_modo("Administrar sedes", "registrar")
+            self.assertIs(app._modulo_zona.controls[0].controls[0],
+                          app._modulo_formulario)
+            app._mostrar_socios()
+            app._cambiar_modo("Administrar socios", "consultar")
+            self.assertIs(app._modulo_zona.controls[0].controls[0],
+                          app._modulo_listado)
+            app._mostrar_solicitudes()
+            app._cambiar_modo("Solicitudes de préstamo", "registrar")
+            self.assertIs(app._modulo_zona.controls[0].controls[0],
+                          app._modulo_formulario)
+            app._mostrar_remitos()
+            self.assertIs(app._modulo_zona.controls[0].controls[0],
+                          app._modulo_listado)
+            app._mostrar_inicio()
+            self.assertIsNone(app._contenido.scroll)
+            self.assertEqual(app._buscador_general.label,
+                             "Buscar en todo BiblioRed")
+
+            # Buscar al escribir y pulsar un resultado lleva a consultar
+            # el módulo correcto sin crear otra ventana.
+            from unittest.mock import patch as _patch_busqueda
+            resultado = {
+                "tipo": "Sede",
+                "titulo": "Biblioteca Prueba",
+                "detalle": "ID 9001",
+                "destino": "Administrar sedes"
+            }
+            with _patch_busqueda(
+                "interfaces.ventana_completa.buscar_en_bibliored",
+                return_value=[resultado]
+            ):
+                app._buscador_general.value = "9001"
+                app._buscador_general.on_change(None)
+            self.assertTrue(app._panel_resultados.visible)
+            self.assertFalse(app._panel_accesos.visible)
+            self.assertEqual(len(app._resultados_global.controls), 1)
+            app._abrir_resultado(resultado)
+            self.assertEqual(app._pagina_activa, "Administrar sedes")
+            self.assertEqual(app._modos["Administrar sedes"], "consultar")
+            filtro = app._encontrar_buscador(app._contenido)
+            self.assertIsNotNone(filtro)
+            self.assertEqual(filtro.value, "9001")
 
             # También se prueban las pantallas secundarias que se reconstruyen.
             from interfaces.ventana_catalogo import VentanaCatalogo
@@ -467,7 +524,14 @@ class PruebaNavegacionCompleta(unittest.TestCase):
             from interfaces.ventana_reservas import VentanaReservas
             catalogo = VentanaCatalogo(app._page)
             catalogo.crear_contenido()
+            self.assertEqual(catalogo._modo, "consultar")
+            self.assertIs(catalogo._zona.controls[0].controls[0],
+                          catalogo._listado)
+            catalogo._cambiar_modo("registrar")
+            self.assertIs(catalogo._zona.controls[0].controls[0],
+                          catalogo._formulario)
             catalogo._cambiar_seccion("ejemplares")
+            self.assertEqual(catalogo._modo, "consultar")
             devoluciones = VentanaDevoluciones(app._page)
             devoluciones.crear_contenido()
             devoluciones._cambiar("retornos")

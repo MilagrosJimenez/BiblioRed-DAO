@@ -17,6 +17,7 @@ from interfaces.ventana_consultas import VentanaConsultas
 from interfaces.ui_moderno import (
     modernizar, AZUL, AZUL_OSCURO, TINTA, APAGADO, FONDO, BORDE
 )
+from interfaces.busqueda_general import buscar_en_bibliored
 
 
 class VentanaCompleta(VentanaFlet):
@@ -29,6 +30,10 @@ class VentanaCompleta(VentanaFlet):
         self._celeste = AZUL
         self._nav_items = {}
         self._pagina_activa = "Inicio"
+        self._modos = {}
+        self._filtro_pendiente = None
+        self._modulo_actual = None
+        self._catalogo_inicial = None
 
         marca = ft.Column(
             controls=[
@@ -131,7 +136,7 @@ class VentanaCompleta(VentanaFlet):
                 menu,
                 ft.Container(
                     content=self._contenido,
-                    padding=ft.Padding.symmetric(horizontal=27, vertical=24),
+                    padding=ft.Padding.symmetric(horizontal=25, vertical=16),
                     expand=True
                 )
             ],
@@ -160,9 +165,93 @@ class VentanaCompleta(VentanaFlet):
 
     def _post(self):
         modernizar(self._contenido, self._page)
+        if self._filtro_pendiente and self._pagina_activa != "Inicio":
+            consulta = self._filtro_pendiente
+            self._filtro_pendiente = None
+            campo = self._encontrar_buscador(self._contenido)
+            if campo is not None:
+                campo.value = consulta
+                if campo.on_change:
+                    campo.on_change(None)
+        self._page.update()
+
+    @staticmethod
+    def _encontrar_buscador(control):
+        if control is None:
+            return None
+        if isinstance(control, ft.TextField) and control.label == "Buscar en esta lista":
+            return control
+        if isinstance(control, (ft.Row, ft.Column)):
+            for hijo in control.controls:
+                campo = VentanaCompleta._encontrar_buscador(hijo)
+                if campo is not None:
+                    return campo
+        if isinstance(control, ft.Container):
+            return VentanaCompleta._encontrar_buscador(control.content)
+        return None
+
+    def _abrir_resultado(self, resultado):
+        nombre = resultado["destino"]
+        if resultado["tipo"] == "Ejemplar":
+            self._catalogo_inicial = "ejemplares"
+        elif resultado["tipo"] == "Libro":
+            self._catalogo_inicial = "libros"
+
+        self._modos[nombre] = "consultar"
+        self._filtro_pendiente = (self._buscador_general.value or "").strip()
+        acciones = {
+            "Administrar sedes": self._mostrar_sedes,
+            "Administrar socios": self._mostrar_socios,
+            "Catálogo y ejemplares": self._mostrar_catalogo,
+            "Solicitudes de préstamo": self._mostrar_solicitudes,
+            "Remitos y traslados": self._mostrar_remitos,
+        }
+        self._ir_a(nombre, acciones[nombre])
+
+    def _filtrar_global(self, e=None):
+        consulta = (self._buscador_general.value or "").strip()
+        if not consulta:
+            self._resultados_global.controls = []
+            self._panel_resultados.visible = False
+            self._panel_accesos.visible = True
+        else:
+            encontrados = buscar_en_bibliored(consulta, limite=4)
+            self._panel_resultados.visible = True
+            self._panel_accesos.visible = False
+            self._resultado_resumen.value = (
+                f"{len(encontrados)} resultados mostrados"
+                if encontrados else "Sin coincidencias"
+            )
+            self._resultados_global.controls = [
+                ft.Container(
+                    bgcolor="#F5F9FD",
+                    border=ft.Border.all(1, BORDE),
+                    border_radius=9,
+                    padding=ft.Padding.symmetric(horizontal=13, vertical=8),
+                    on_click=lambda ev, dato=dato: self._abrir_resultado(dato),
+                    ink=True,
+                    content=ft.Row([
+                        ft.Icon(ft.Icons.SEARCH, color=AZUL, size=17),
+                        ft.Text(dato["tipo"], color=AZUL, size=11, width=72),
+                        ft.Text(dato["titulo"], color=TINTA, size=13,
+                                weight=ft.FontWeight.BOLD, expand=True,
+                                max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
+                        ft.Text(dato["detalle"], color=APAGADO, size=11,
+                                width=285, max_lines=1,
+                                overflow=ft.TextOverflow.ELLIPSIS),
+                        ft.Icon(ft.Icons.ARROW_FORWARD_IOS, size=13, color=AZUL)
+                    ], spacing=9)
+                )
+                for dato in encontrados
+            ] or [
+                ft.Text("No encontramos registros con ese texto.",
+                        size=13, color=APAGADO)
+            ]
         self._page.update()
 
     def _mostrar_inicio(self, e=None):
+        self._contenido.scroll = None
+        self._contenido.spacing = 12
         sedes = consultar_sedes()
         socios = consultar_socios()
         prestamos = consultar_prestamos()
@@ -173,157 +262,243 @@ class VentanaCompleta(VentanaFlet):
 
         def metrica(titulo, valor, subtitulo, icono):
             return ft.Container(
-                width=236, bgcolor="#FFFFFF",
-                border=ft.Border.all(1, BORDE), border_radius=16, padding=22,
+                width=231, bgcolor="#FFFFFF",
+                border=ft.Border.all(1, BORDE), border_radius=13,
+                padding=ft.Padding.symmetric(horizontal=17, vertical=13),
                 content=ft.Column([
                     ft.Row([
                         ft.Text(titulo, size=12, color=APAGADO, expand=True),
-                        ft.Icon(getattr(ft.Icons, icono, ft.Icons.CIRCLE_OUTLINED),
-                                color=AZUL, size=21),
+                        ft.Icon(getattr(ft.Icons, icono, ft.Icons.INFO_OUTLINE),
+                                size=19, color=AZUL),
                     ]),
-                    ft.Text(str(valor), size=35, weight=ft.FontWeight.BOLD,
+                    ft.Text(str(valor), size=30, weight=ft.FontWeight.BOLD,
                             color=TINTA),
                     ft.Text(subtitulo, size=11, color=APAGADO)
-                ], spacing=7)
+                ], spacing=3)
             )
+
+        self._buscador_general = ft.TextField(
+            label="Buscar en todo BiblioRed",
+            hint_text="Nombre, documento, sede, título, ISBN, ejemplar o remito…",
+            prefix_icon=ft.Icons.SEARCH,
+            border_radius=12,
+            border_color=BORDE,
+            focused_border_color=AZUL,
+            text_size=15,
+            height=58,
+            on_change=self._filtrar_global,
+            on_submit=self._filtrar_global,
+        )
+        self._resultado_resumen = ft.Text("", color=APAGADO, size=11)
+        self._resultados_global = ft.Column(spacing=5)
+        self._panel_resultados = ft.Container(
+            visible=False, bgcolor="#FFFFFF",
+            border=ft.Border.all(1, BORDE), border_radius=13, padding=12,
+            content=ft.Column([
+                self._resultado_resumen, self._resultados_global
+            ], spacing=6)
+        )
 
         accesos = [
             ("Nueva solicitud", "Solicitudes de préstamo",
-             self._mostrar_solicitudes, "DESCRIPTION_OUTLINED"),
-            ("Gestionar reservas", "Reservas y disponibilidad",
-             self._mostrar_reservas, "EVENT_AVAILABLE_OUTLINED"),
-            ("Consultar inventario", "Inventario por códigos",
-             self._mostrar_inventario, "INVENTORY_2_OUTLINED"),
-            ("Generar reportes", "Reportes",
-             self._mostrar_reportes, "BAR_CHART_OUTLINED"),
+             self._mostrar_solicitudes, "DESCRIPTION_OUTLINED", "registrar"),
+            ("Consultar sedes", "Administrar sedes",
+             self._mostrar_sedes, "ACCOUNT_BALANCE_OUTLINED", "consultar"),
+            ("Ver catálogo", "Catálogo y ejemplares",
+             self._mostrar_catalogo, "MENU_BOOK_OUTLINED", "consultar"),
+            ("Preparar remitos", "Remitos y traslados",
+             self._mostrar_remitos, "LOCAL_SHIPPING_OUTLINED", "registrar"),
         ]
-        botones = [
-            ft.Container(
-                bgcolor="#F6F9FD",
-                border_radius=11,
+
+        botones = []
+        for titulo, seccion, accion, icono, modo in accesos:
+            def abrir(ev, n=seccion, f=accion, m=modo):
+                self._modos[n] = m
+                self._ir_a(n, f)
+
+            botones.append(ft.Container(
+                width=217, bgcolor="#F4F8FE", border_radius=10,
                 border=ft.Border.all(1, BORDE),
-                padding=15,
-                width=218,
-                ink=True,
-                on_click=lambda e, n=seccion, f=accion: self._ir_a(n, f),
-                content=ft.Column([
-                    ft.Icon(getattr(ft.Icons, icono, ft.Icons.CIRCLE_OUTLINED),
-                            color=AZUL, size=25),
-                    ft.Text(nombre, color=TINTA,
-                            weight=ft.FontWeight.W_500, size=13)
-                ], spacing=12)
-            ) for nombre, seccion, accion, icono in accesos
-        ]
+                padding=ft.Padding.symmetric(horizontal=14, vertical=13),
+                on_click=abrir, ink=True,
+                content=ft.Row([
+                    ft.Icon(getattr(ft.Icons, icono, ft.Icons.SEARCH),
+                            size=21, color=AZUL),
+                    ft.Text(titulo, size=13, color=TINTA,
+                            weight=ft.FontWeight.W_500, expand=True)
+                ], spacing=10)
+            ))
+
+        self._panel_accesos = ft.Container(
+            bgcolor="#FFFFFF", border=ft.Border.all(1, BORDE),
+            border_radius=13, padding=17,
+            content=ft.Column([
+                ft.Text("Accesos rápidos", size=18,
+                        weight=ft.FontWeight.BOLD, color=TINTA),
+                ft.Row(botones, spacing=12, wrap=False),
+            ], spacing=13)
+        )
 
         self._contenido.controls = [
             ft.Column([
-                ft.Text("Panel general", size=28, weight=ft.FontWeight.BOLD,
-                        color=TINTA),
-                ft.Text("Una vista clara del estado de BiblioRed.",
-                        size=13, color=APAGADO),
-            ], spacing=4),
+                ft.Text("Inicio", size=27, weight=ft.FontWeight.BOLD, color=TINTA),
+                ft.Text("Todo lo que necesitás para gestionar BiblioRed.",
+                        color=APAGADO, size=13),
+            ], spacing=3),
+            self._buscador_general,
             ft.Row([
                 metrica("Sedes activas", activos,
-                        f"{len(sedes)} sedes registradas", "ACCOUNT_BALANCE_OUTLINED"),
+                        f"{len(sedes)} registradas", "ACCOUNT_BALANCE_OUTLINED"),
                 metrica("Socios", len(socios),
                         "Personas registradas", "PEOPLE_OUTLINE_ROUNDED"),
                 metrica("Préstamos activos", prestamos_activos,
                         "Ejemplares en circulación", "AUTO_STORIES_OUTLINED"),
                 metrica("Reservas pendientes", reservas_pendientes,
                         "Solicitudes en espera", "EVENT_AVAILABLE_OUTLINED"),
-            ], spacing=13, wrap=True),
-            ft.Container(
-                bgcolor="#FFFFFF", border_radius=16,
-                border=ft.Border.all(1, BORDE), padding=24,
-                content=ft.Column([
-                    ft.Text("Accesos rápidos", size=19,
-                            weight=ft.FontWeight.BOLD, color=TINTA),
-                    ft.Text("Continuá con una tarea frecuente.",
-                            size=12, color=APAGADO),
-                    ft.Row(botones, spacing=14, wrap=True)
-                ], spacing=14)
-            ),
-            ft.Container(
-                bgcolor="#EAF2FF", border_radius=15, padding=22,
-                content=ft.Row([
-                    ft.Icon(ft.Icons.VERIFIED_OUTLINED, color=AZUL, size=28),
-                    ft.Column([
-                        ft.Text("Sistema de préstamos interbibliotecarios",
-                                size=15, color=TINTA,
-                                weight=ft.FontWeight.BOLD),
-                        ft.Text("Administrá el catálogo, los traslados, las reservas "
-                                "y los préstamos desde un mismo lugar.",
-                                size=12, color=APAGADO)
-                    ], spacing=5)
-                ], spacing=16)
-            )
+            ], spacing=11, wrap=False),
+            self._panel_accesos,
+            self._panel_resultados,
         ]
+        self._post()
+
+    @staticmethod
+    def _agrandar_formulario(formulario):
+        formulario.width = 585
+        formulario.height = None
+        formulario.expand = False
+        if not isinstance(formulario.content, ft.Column):
+            return
+        formulario.content.scroll = None
+        formulario.content.expand = False
+        for c in formulario.content.controls:
+            if isinstance(c, (ft.TextField, ft.Dropdown)):
+                c.width = 525
+            elif isinstance(c, ft.Row):
+                campos = [x for x in c.controls
+                          if isinstance(x, (ft.TextField, ft.Dropdown))]
+                if len(campos) == 2:
+                    if isinstance(campos[0], ft.TextField):
+                        campos[0].width = 185
+                        campos[1].width = 325
+                    else:
+                        campos[0].width = 252
+                        campos[1].width = 252
+
+    def _cambiar_modo(self, clave, modo):
+        self._modos[clave] = modo
+        if self._modulo_actual != clave:
+            return
+        contenido = self._modulo_formulario if modo == "registrar" else self._modulo_listado
+        self._modulo_zona.controls = [
+            ft.Row([contenido], spacing=0)
+        ]
+        for nombre, boton in self._modulo_botones.items():
+            activo = nombre == modo
+            boton.bgcolor = AZUL if activo else "#FFFFFF"
+            boton.color = "#FFFFFF" if activo else TINTA
+        self._page.update()
+
+    def _presentar_modulo(self, clave, encabezado, fila, registrar, consultar):
+        self._contenido.scroll = ft.ScrollMode.AUTO
+        self._contenido.spacing = 16
+        self._modulo_actual = clave
+        self._modulo_formulario, self._modulo_listado = fila.controls
+        self._agrandar_formulario(self._modulo_formulario)
+        self._modulo_listado.width = None
+        self._modulo_listado.expand = True
+        self._modulo_botones = {
+            "registrar": ft.Button(registrar,
+                                   on_click=lambda e: self._cambiar_modo(clave, "registrar")),
+            "consultar": ft.Button(consultar,
+                                   on_click=lambda e: self._cambiar_modo(clave, "consultar")),
+        }
+        self._modulo_zona = ft.Column(spacing=0)
+        self._contenido.controls = [
+            encabezado,
+            ft.Row([
+                self._modulo_botones["registrar"],
+                self._modulo_botones["consultar"]
+            ], spacing=12),
+            self._modulo_zona
+        ]
+        self._cambiar_modo(clave, self._modos.get(clave, "consultar"))
         self._post()
 
     def _mostrar_sedes(self, e=None):
         super()._mostrar_sedes(e)
-        self._post()
-
-    def _mostrar_socios(self, e=None):
-        pantalla = VentanaSocios(
-            self._page,
-            self._mostrar_socios
+        encabezado, fila = self._contenido.controls
+        self._presentar_modulo(
+            "Administrar sedes", encabezado, fila,
+            "Registrar nueva sede", "Consultar sedes"
         )
 
-        self._contenido.controls = [
-            self._crear_titulo(
-                "Administrar socios",
-                "Registrá, consultá y modificá los socios de la red"
-            ),
-            pantalla.crear_contenido()
-        ]
+    def _cargar_edicion(self, datos):
+        super()._cargar_edicion(datos)
+        self._cambiar_modo("Administrar sedes", "registrar")
 
-        self._post()
+    def _mostrar_socios(self, e=None):
+        def actualizar():
+            self._modos["Administrar socios"] = "consultar"
+            self._mostrar_socios()
+
+        pantalla = VentanaSocios(self._page, actualizar)
+        vista = pantalla.crear_contenido()
+        editar_original = pantalla._cargar_edicion
+
+        def editar_y_mostrar(datos):
+            editar_original(datos)
+            self._cambiar_modo("Administrar socios", "registrar")
+
+        pantalla._cargar_edicion = editar_y_mostrar
+        self._presentar_modulo(
+            "Administrar socios",
+            self._crear_titulo("Administrar socios",
+                               "Gestioná los datos y estados de los socios"),
+            vista,
+            "Registrar nuevo socio", "Consultar socios"
+        )
 
     def _mostrar_catalogo(self, e=None):
+        self._contenido.scroll = ft.ScrollMode.AUTO
+        self._contenido.spacing = 16
         pantalla = VentanaCatalogo(self._page)
-
+        if self._catalogo_inicial:
+            pantalla._seccion = self._catalogo_inicial
+            self._catalogo_inicial = None
         self._contenido.controls = [
-            self._crear_titulo(
-                "Catálogo y ejemplares",
-                "Administrá los libros y sus copias físicas por sede"
-            ),
+            self._crear_titulo("Catálogo y ejemplares",
+                               "Libros y copias físicas de cada biblioteca"),
             pantalla.crear_contenido()
         ]
-
         self._post()
 
     def _mostrar_solicitudes(self, e=None):
-        pantalla = VentanaSolicitudes(
-            self._page,
-            self._mostrar_solicitudes
+        def actualizar():
+            self._modos["Solicitudes de préstamo"] = "consultar"
+            self._mostrar_solicitudes()
+
+        pantalla = VentanaSolicitudes(self._page, actualizar)
+        self._presentar_modulo(
+            "Solicitudes de préstamo",
+            self._crear_titulo("Solicitudes de préstamo",
+                               "Préstamos locales e interbibliotecarios"),
+            pantalla.crear_contenido(),
+            "Nueva solicitud", "Consultar solicitudes"
         )
-
-        self._contenido.controls = [
-            self._crear_titulo(
-                "Solicitudes de préstamo",
-                "Solicitudes locales e interbibliotecarias"
-            ),
-            pantalla.crear_contenido()
-        ]
-
-        self._post()
 
     def _mostrar_remitos(self, e=None):
-        pantalla = VentanaRemitos(
-            self._page,
-            self._mostrar_remitos
+        def actualizar():
+            self._modos["Remitos y traslados"] = "consultar"
+            self._mostrar_remitos()
+
+        pantalla = VentanaRemitos(self._page, actualizar)
+        self._presentar_modulo(
+            "Remitos y traslados",
+            self._crear_titulo("Remitos y traslados",
+                               "Empaquetado, despacho, recepción e historial"),
+            pantalla.crear_contenido(),
+            "Preparar remito", "Consultar y gestionar remitos"
         )
-
-        self._contenido.controls = [
-            self._crear_titulo(
-                "Remitos y traslados",
-                "Preparación, despacho, recepción y trazabilidad"
-            ),
-            pantalla.crear_contenido()
-        ]
-
-        self._post()
 
     def _mostrar_prestamos(self, e=None):
         pantalla = VentanaPrestamos(
