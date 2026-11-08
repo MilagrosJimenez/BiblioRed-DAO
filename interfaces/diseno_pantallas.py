@@ -187,15 +187,24 @@ def preparar_listado_tabla(listado, pesos, page):
     listado.width = ANCHO
     listado.expand = False
     listado.padding = 20
-    filas = tabla_como_listado(tabla, pesos)
+    tabla_visual = tabla_como_listado(tabla, pesos)
+    encabezado = tabla_visual.controls[0] if tabla.rows else None
+    registros = ft.Column(
+        controls=tabla_visual.controls[1:] if tabla.rows
+                 else tabla_visual.controls,
+        spacing=0
+    )
+    contenido = [
+        titulo,
+        buscador_de_tarjetas(
+            registros, page, sugerencia_de_busqueda([titulo.value])
+        )
+    ]
+    if encabezado is not None:
+        contenido.append(encabezado)
+    contenido.append(registros)
     listado.content = ft.Column(
-        controls=[
-            titulo,
-            buscador_de_tarjetas(
-                filas, page, sugerencia_de_busqueda([titulo.value])
-            ),
-            filas,
-        ],
+        controls=contenido,
         spacing=13,
     )
 
