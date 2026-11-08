@@ -493,6 +493,31 @@ class PruebaNavegacionCompleta(unittest.TestCase):
             self.assertEqual(app._buscador_general.label,
                              "Buscar en todo BiblioRed")
 
+            # Buscar al escribir y pulsar un resultado lleva a consultar
+            # el módulo correcto sin crear otra ventana.
+            from unittest.mock import patch as _patch_busqueda
+            resultado = {
+                "tipo": "Sede",
+                "titulo": "Biblioteca Prueba",
+                "detalle": "ID 9001",
+                "destino": "Administrar sedes"
+            }
+            with _patch_busqueda(
+                "interfaces.ventana_completa.buscar_en_bibliored",
+                return_value=[resultado]
+            ):
+                app._buscador_general.value = "9001"
+                app._buscador_general.on_change(None)
+            self.assertTrue(app._panel_resultados.visible)
+            self.assertFalse(app._panel_accesos.visible)
+            self.assertEqual(len(app._resultados_global.controls), 1)
+            app._abrir_resultado(resultado)
+            self.assertEqual(app._pagina_activa, "Administrar sedes")
+            self.assertEqual(app._modos["Administrar sedes"], "consultar")
+            filtro = app._encontrar_buscador(app._contenido)
+            self.assertIsNotNone(filtro)
+            self.assertEqual(filtro.value, "9001")
+
             # También se prueban las pantallas secundarias que se reconstruyen.
             from interfaces.ventana_catalogo import VentanaCatalogo
             from interfaces.ventana_devoluciones import VentanaDevoluciones
