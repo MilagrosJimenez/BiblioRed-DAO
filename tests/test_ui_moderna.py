@@ -200,6 +200,53 @@ class PruebasBuscadores(unittest.TestCase):
             not fila.wrap for fila in filas_cuatro
         ))
 
+    def test_inicio_centrado_en_ventana_normal_y_maximizada(self):
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        from interfaces.diseno_pantallas import ANCHO
+        from interfaces.ventana_completa import VentanaCompleta
+
+        class Pagina:
+            def __init__(self):
+                self.window = SimpleNamespace(width=1280, height=740)
+                self.controls = []
+            def add(self, control):
+                self.controls.append(control)
+            def update(self):
+                pass
+
+        app = VentanaCompleta.__new__(VentanaCompleta)
+        app._page = Pagina()
+        app._contenido = ft.Column([])
+        app._crear_estructura()
+        with patch(
+            "interfaces.ventana_completa.consultar_sedes", return_value=[]
+        ), patch(
+            "interfaces.ventana_completa.consultar_socios", return_value=[]
+        ), patch(
+            "interfaces.ventana_completa.consultar_prestamos", return_value=[]
+        ), patch(
+            "interfaces.ventana_completa.consultar_reservas", return_value=[]
+        ), patch(
+            "interfaces.ventana_completa.consultar_solicitudes", return_value=[]
+        ), patch(
+            "interfaces.ventana_completa.consultar_remitos", return_value=[]
+        ):
+            for ancho in (1280, 1366, 1600):
+                app._page.window.width = ancho
+                app._mostrar_inicio()
+                self.assertIsNone(app._contenido.scroll)
+                self.assertEqual(len(app._contenido.controls), 1)
+                fila = app._contenido.controls[0]
+                self.assertIsInstance(fila, ft.Row)
+                self.assertEqual(fila.alignment, ft.MainAxisAlignment.CENTER)
+                panel = fila.controls[0]
+                self.assertIsInstance(panel, ft.Column)
+                self.assertEqual(panel.width, ANCHO)
+                self.assertEqual(len(panel.controls[2].controls), 4)
+                self.assertIn(app._panel_actividad, panel.controls)
+                self.assertIn(app._panel_accesos, panel.controls)
+
     def test_button_y_controles_modernos(self):
         panel = ft.Column([
             ft.Container(
