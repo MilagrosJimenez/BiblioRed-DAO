@@ -4,6 +4,7 @@ Solo organiza controles Flet existentes. Conserva sus callbacks y no
 accede a SQLite. En formularios y consultas usa un mismo ancho de trabajo.
 """
 import flet as ft
+from interfaces.ui_moderno import buscador_de_tarjetas, sugerencia_de_busqueda
 
 ANCHO = 944
 ANCHO_INTERIOR = 890
@@ -176,7 +177,7 @@ def tabla_como_listado(tabla, pesos, vacio="No hay registros todavía."):
     )
 
 
-def preparar_listado_tabla(listado, pesos):
+def preparar_listado_tabla(listado, pesos, page):
     controles = listado.content.controls
     titulo = controles[0]
     tabla = next(
@@ -186,10 +187,14 @@ def preparar_listado_tabla(listado, pesos):
     listado.width = ANCHO
     listado.expand = False
     listado.padding = 20
+    filas = tabla_como_listado(tabla, pesos)
     listado.content = ft.Column(
         controls=[
             titulo,
-            tabla_como_listado(tabla, pesos)
+            buscador_de_tarjetas(
+                filas, page, sugerencia_de_busqueda([titulo.value])
+            ),
+            filas,
         ],
         spacing=13,
     )
