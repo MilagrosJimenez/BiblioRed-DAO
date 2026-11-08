@@ -190,8 +190,7 @@ def preparar_listado_tabla(listado, pesos, page):
     tabla_visual = tabla_como_listado(tabla, pesos)
     encabezado = tabla_visual.controls[0] if tabla.rows else None
     registros = ft.Column(
-        controls=tabla_visual.controls[1:] if tabla.rows
-                 else tabla_visual.controls,
+        controls=tabla_visual.controls[1:] if tabla.rows else [],
         spacing=0
     )
     contenido = [
@@ -202,6 +201,10 @@ def preparar_listado_tabla(listado, pesos, page):
     ]
     if encabezado is not None:
         contenido.append(encabezado)
+    else:
+        contenido.append(
+            ft.Text("Todavía no hay registros.", color="#60768D", size=13)
+        )
     contenido.append(registros)
     listado.content = ft.Column(
         controls=contenido,
