@@ -180,13 +180,21 @@ class PruebasBuscadores(unittest.TestCase):
 
         visitar(app._contenido)
         ajustables = [fila for fila in filas if fila.wrap]
-        self.assertGreaterEqual(len(ajustables), 2)
         for fila in ajustables:
             for control in fila.controls:
                 self.assertFalse(
                     getattr(control, "expand", False),
                     "Una fila con wrap no puede contener tarjetas expandibles"
                 )
+        filas_cuatro = [
+            fila for fila in filas
+            if len(fila.controls) == 4
+            and all(isinstance(c, ft.Container) for c in fila.controls)
+        ]
+        self.assertGreaterEqual(len(filas_cuatro), 2)
+        self.assertTrue(all(
+            not fila.wrap for fila in filas_cuatro
+        ))
 
     def test_button_y_controles_modernos(self):
         panel = ft.Column([
@@ -454,8 +462,8 @@ class PruebaNavegacionCompleta(unittest.TestCase):
                     getattr(app, nombre)()
                     if nombre == "_mostrar_sedes":
                         self.assertEqual(app._campo_id.label, "ID")
-                        self.assertEqual(app._campo_id.width, 109)
-                        self.assertEqual(app._campo_telefono.width, 174)
+                        self.assertEqual(app._campo_id.width, 185)
+                        self.assertEqual(app._campo_telefono.width, 325)
                         self.assertEqual(app._dia_desde.label, "Desde")
                         self.assertEqual(app._dia_hasta.label, "Hasta")
                         self.assertEqual(app._hora_desde.label, "Desde")
