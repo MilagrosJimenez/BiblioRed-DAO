@@ -165,6 +165,10 @@ class PruebasBuscadores(unittest.TestCase):
             "interfaces.ventana_completa.consultar_prestamos", return_value=[]
         ), patch(
             "interfaces.ventana_completa.consultar_reservas", return_value=[]
+        ), patch(
+            "interfaces.ventana_completa.consultar_solicitudes", return_value=[]
+        ), patch(
+            "interfaces.ventana_completa.consultar_remitos", return_value=[]
         ):
             app._mostrar_inicio()
 
@@ -462,8 +466,8 @@ class PruebaNavegacionCompleta(unittest.TestCase):
                     getattr(app, nombre)()
                     if nombre == "_mostrar_sedes":
                         self.assertEqual(app._campo_id.label, "ID")
-                        self.assertEqual(app._campo_id.width, 185)
-                        self.assertEqual(app._campo_telefono.width, 325)
+                        self.assertEqual(app._campo_id.width, 165)
+                        self.assertEqual(app._campo_telefono.width, 270)
                         self.assertEqual(app._dia_desde.label, "Desde")
                         self.assertEqual(app._dia_hasta.label, "Hasta")
                         self.assertEqual(app._hora_desde.label, "Desde")
