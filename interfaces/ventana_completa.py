@@ -18,6 +18,13 @@ from interfaces.ui_moderno import (
     modernizar, AZUL, AZUL_OSCURO, TINTA, APAGADO, FONDO, BORDE
 )
 from interfaces.busqueda_general import buscar_en_bibliored
+from interfaces.diseno_pantallas import (
+    ANCHO, centrar, preparar_formulario_sedes, preparar_formulario_socios,
+    preparar_formulario_solicitudes, preparar_formulario_remitos,
+    preparar_listado_tabla, preparar_listado_tarjetas,
+)
+from datos.prestamos_datos import consultar_solicitudes
+from datos.remitos_datos import consultar_remitos
 
 
 class VentanaCompleta(VentanaFlet):
@@ -55,7 +62,7 @@ class VentanaCompleta(VentanaFlet):
             spacing=0
         )
         encabezado = ft.Container(
-            height=94,
+            height=82,
             bgcolor="#FFFFFF",
             padding=ft.Padding.symmetric(horizontal=26, vertical=12),
             border=ft.Border.only(bottom=ft.BorderSide(1, BORDE)),
@@ -136,7 +143,7 @@ class VentanaCompleta(VentanaFlet):
                 menu,
                 ft.Container(
                     content=self._contenido,
-                    padding=ft.Padding.symmetric(horizontal=25, vertical=16),
+                    padding=ft.Padding.symmetric(horizontal=18, vertical=13),
                     expand=True
                 )
             ],
@@ -210,6 +217,7 @@ class VentanaCompleta(VentanaFlet):
 
     def _filtrar_global(self, e=None):
         consulta = (self._buscador_general.value or "").strip()
+        self._panel_actividad.visible = not bool(consulta)
         if not consulta:
             self._resultados_global.controls = []
             self._panel_resultados.visible = False
@@ -262,7 +270,7 @@ class VentanaCompleta(VentanaFlet):
 
         def metrica(titulo, valor, subtitulo, icono):
             return ft.Container(
-                width=231, bgcolor="#FFFFFF",
+                width=226, bgcolor="#FFFFFF",
                 border=ft.Border.all(1, BORDE), border_radius=13,
                 padding=ft.Padding.symmetric(horizontal=17, vertical=13),
                 content=ft.Column([
@@ -285,14 +293,15 @@ class VentanaCompleta(VentanaFlet):
             border_color=BORDE,
             focused_border_color=AZUL,
             text_size=15,
-            height=58,
+            height=56,
+            width=ANCHO,
             on_change=self._filtrar_global,
             on_submit=self._filtrar_global,
         )
         self._resultado_resumen = ft.Text("", color=APAGADO, size=11)
         self._resultados_global = ft.Column(spacing=5)
         self._panel_resultados = ft.Container(
-            visible=False, bgcolor="#FFFFFF",
+            visible=False, width=ANCHO, bgcolor="#FFFFFF",
             border=ft.Border.all(1, BORDE), border_radius=13, padding=12,
             content=ft.Column([
                 self._resultado_resumen, self._resultados_global
@@ -317,7 +326,7 @@ class VentanaCompleta(VentanaFlet):
                 self._ir_a(n, f)
 
             botones.append(ft.Container(
-                width=217, bgcolor="#F4F8FE", border_radius=10,
+                width=214, bgcolor="#F4F8FE", border_radius=10,
                 border=ft.Border.all(1, BORDE),
                 padding=ft.Padding.symmetric(horizontal=14, vertical=13),
                 on_click=abrir, ink=True,
@@ -330,7 +339,7 @@ class VentanaCompleta(VentanaFlet):
             ))
 
         self._panel_accesos = ft.Container(
-            bgcolor="#FFFFFF", border=ft.Border.all(1, BORDE),
+            width=ANCHO, bgcolor="#FFFFFF", border=ft.Border.all(1, BORDE),
             border_radius=13, padding=17,
             content=ft.Column([
                 ft.Text("Accesos rápidos", size=18,
@@ -338,6 +347,8 @@ class VentanaCompleta(VentanaFlet):
                 ft.Row(botones, spacing=12, wrap=False),
             ], spacing=13)
         )
+
+        self._panel_actividad = self._crear_actividad_reciente()
 
         self._contenido.controls = [
             ft.Column([
@@ -358,31 +369,60 @@ class VentanaCompleta(VentanaFlet):
             ], spacing=11, wrap=False),
             self._panel_accesos,
             self._panel_resultados,
+            self._panel_actividad,
         ]
         self._post()
 
-    @staticmethod
-    def _agrandar_formulario(formulario):
-        formulario.width = 585
-        formulario.height = None
-        formulario.expand = False
-        if not isinstance(formulario.content, ft.Column):
-            return
-        formulario.content.scroll = None
-        formulario.content.expand = False
-        for c in formulario.content.controls:
-            if isinstance(c, (ft.TextField, ft.Dropdown)):
-                c.width = 525
-            elif isinstance(c, ft.Row):
-                campos = [x for x in c.controls
-                          if isinstance(x, (ft.TextField, ft.Dropdown))]
-                if len(campos) == 2:
-                    if isinstance(campos[0], ft.TextField):
-                        campos[0].width = 185
-                        campos[1].width = 325
-                    else:
-                        campos[0].width = 252
-                        campos[1].width = 252
+    def _crear_actividad_reciente(self):
+        solicitudes = consultar_solicitudes()[:3]
+        remitos = consultar_remitos()[:3]
+
+        def resumen(titulo, entradas):
+            return ft.Container(
+                width=438,
+                padding=ft.Padding.symmetric(horizontal=13, vertical=9),
+                bgcolor="#F6F9FE",
+                border_radius=10,
+                content=ft.Column([
+                    ft.Text(titulo, size=12, weight=ft.FontWeight.BOLD,
+                            color=TINTA),
+                    *(ft.Text(dato, size=12, color=APAGADO, max_lines=1,
+                               overflow=ft.TextOverflow.ELLIPSIS)
+                      for dato in entradas),
+                ] if entradas else [
+                    ft.Text(titulo, size=12, weight=ft.FontWeight.BOLD,
+                            color=TINTA),
+                    ft.Text("Sin movimientos recientes", size=12,
+                            color=APAGADO),
+                ], spacing=5),
+            )
+
+        solicitudes_texto = [
+            f"Solicitud #{r[0]} · {r[1]} · {r[8]}"
+            for r in solicitudes
+        ]
+        remitos_texto = [
+            f"Remito #{r[0]} · {r[1]} · {r[5]}"
+            for r in remitos
+        ]
+        return ft.Container(
+            width=ANCHO,
+            bgcolor="#FFFFFF",
+            border_radius=13,
+            border=ft.Border.all(1, BORDE),
+            padding=ft.Padding.symmetric(horizontal=17, vertical=13),
+            content=ft.Column([
+                ft.Row([
+                    ft.Text("Actividad reciente", size=16,
+                            weight=ft.FontWeight.BOLD, color=TINTA),
+                    ft.Text("Últimos registros", size=11, color=APAGADO),
+                ], spacing=12),
+                ft.Row([
+                    resumen("Solicitudes", solicitudes_texto),
+                    resumen("Remitos", remitos_texto)
+                ], spacing=12),
+            ], spacing=9),
+        )
 
     def _cambiar_modo(self, clave, modo):
         self._modos[clave] = modo
@@ -390,7 +430,7 @@ class VentanaCompleta(VentanaFlet):
             return
         contenido = self._modulo_formulario if modo == "registrar" else self._modulo_listado
         self._modulo_zona.controls = [
-            ft.Row([contenido], spacing=0)
+            centrar(contenido)
         ]
         for nombre, boton in self._modulo_botones.items():
             activo = nombre == modo
@@ -403,9 +443,11 @@ class VentanaCompleta(VentanaFlet):
         self._contenido.spacing = 16
         self._modulo_actual = clave
         self._modulo_formulario, self._modulo_listado = fila.controls
-        self._agrandar_formulario(self._modulo_formulario)
-        self._modulo_listado.width = None
-        self._modulo_listado.expand = True
+        self._modulo_formulario.width = ANCHO
+        self._modulo_formulario.height = None
+        self._modulo_formulario.expand = False
+        self._modulo_listado.width = ANCHO
+        self._modulo_listado.expand = False
         self._modulo_botones = {
             "registrar": ft.Button(registrar,
                                    on_click=lambda e: self._cambiar_modo(clave, "registrar")),
@@ -427,6 +469,9 @@ class VentanaCompleta(VentanaFlet):
     def _mostrar_sedes(self, e=None):
         super()._mostrar_sedes(e)
         encabezado, fila = self._contenido.controls
+        formulario, listado = fila.controls
+        preparar_formulario_sedes(formulario, self)
+        preparar_listado_tabla(listado, [1, 3, 3, 2, 2], self._page)
         self._presentar_modulo(
             "Administrar sedes", encabezado, fila,
             "Registrar nueva sede", "Consultar sedes"
@@ -450,6 +495,8 @@ class VentanaCompleta(VentanaFlet):
             self._cambiar_modo("Administrar socios", "registrar")
 
         pantalla._cargar_edicion = editar_y_mostrar
+        preparar_formulario_socios(vista.controls[0], pantalla)
+        preparar_listado_tabla(vista.controls[1], [2, 4, 2, 3], self._page)
         self._presentar_modulo(
             "Administrar socios",
             self._crear_titulo("Administrar socios",
@@ -478,11 +525,14 @@ class VentanaCompleta(VentanaFlet):
             self._mostrar_solicitudes()
 
         pantalla = VentanaSolicitudes(self._page, actualizar)
+        vista = pantalla.crear_contenido()
+        preparar_formulario_solicitudes(vista.controls[0], pantalla)
+        preparar_listado_tarjetas(vista.controls[1])
         self._presentar_modulo(
             "Solicitudes de préstamo",
             self._crear_titulo("Solicitudes de préstamo",
                                "Préstamos locales e interbibliotecarios"),
-            pantalla.crear_contenido(),
+            vista,
             "Nueva solicitud", "Consultar solicitudes"
         )
 
@@ -492,11 +542,14 @@ class VentanaCompleta(VentanaFlet):
             self._mostrar_remitos()
 
         pantalla = VentanaRemitos(self._page, actualizar)
+        vista = pantalla.crear_contenido()
+        preparar_formulario_remitos(vista.controls[0], pantalla)
+        preparar_listado_tarjetas(vista.controls[1])
         self._presentar_modulo(
             "Remitos y traslados",
             self._crear_titulo("Remitos y traslados",
                                "Empaquetado, despacho, recepción e historial"),
-            pantalla.crear_contenido(),
+            vista,
             "Preparar remito", "Consultar y gestionar remitos"
         )
 

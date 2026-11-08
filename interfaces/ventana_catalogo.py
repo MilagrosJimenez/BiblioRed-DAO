@@ -2,6 +2,10 @@
 import flet as ft
 from interfaces.ui_moderno import icono_accion
 from interfaces.ui_moderno import modernizar
+from interfaces.diseno_pantallas import (
+    ANCHO, centrar, preparar_formulario_catalogo,
+    preparar_listado_tarjetas,
+)
 
 from servicios.catalogo_servicio import CatalogoServicio
 
@@ -76,24 +80,18 @@ class VentanaCatalogo:
         self._modo = modo
         self._actualizar_botones()
         elegido = self._formulario if modo == "registrar" else self._listado
-        self._zona.controls = [ft.Row([elegido], spacing=0)]
+        self._zona.controls = [centrar(elegido)]
         self._page.update()
 
     def _dibujar(self):
         vista = (self._vista_libros() if self._seccion == "libros"
                  else self._vista_ejemplares())
         self._formulario, self._listado = vista.controls
-        self._formulario.width = 585
-        self._formulario.expand = False
-        if isinstance(self._formulario.content, ft.Column):
-            for control in self._formulario.content.controls:
-                if isinstance(control, (ft.TextField, ft.Dropdown)):
-                    control.width = 525
-        self._listado.width = None
-        self._listado.expand = True
+        preparar_formulario_catalogo(self._formulario, self)
+        preparar_listado_tarjetas(self._listado)
         self._actualizar_botones()
         elegido = self._formulario if self._modo == "registrar" else self._listado
-        self._zona.controls = [ft.Row([elegido], spacing=0)]
+        self._zona.controls = [centrar(elegido)]
         modernizar(self._zona, self._page)
 
     def _mensaje(self, titulo, descripcion):

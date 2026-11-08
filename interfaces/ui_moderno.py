@@ -81,7 +81,7 @@ def buscador_de_tabla(tabla, page, sugerencia):
     campo = ft.TextField(
         label="Buscar en esta lista",
         hint_text=sugerencia,
-        width=330,
+        width=510,
         border_radius=10,
         border_color=BORDE,
         focused_border_color=AZUL,
@@ -108,7 +108,7 @@ def buscador_de_tarjetas(columna, page, sugerencia):
     campo = ft.TextField(
         label="Buscar en esta lista",
         hint_text=sugerencia,
-        width=330,
+        width=510,
         border_radius=10,
         border_color=BORDE,
         focused_border_color=AZUL,
@@ -151,12 +151,12 @@ def personalizar_controles(control):
         control.border_color = BORDE
         control.focused_border_color = AZUL
         control.cursor_color = AZUL
-        control.text_size = 13
+        control.text_size = 15
     elif isinstance(control, ft.Dropdown):
         control.border_radius = 10
         control.border_color = BORDE
         control.focused_border_color = AZUL
-        control.text_size = 13
+        control.text_size = 15
     elif isinstance(control, ft.DataTable):
         control.heading_row_color = "#EDF4FC"
         control.column_spacing = 18
