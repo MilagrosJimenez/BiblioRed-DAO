@@ -350,26 +350,41 @@ class VentanaCompleta(VentanaFlet):
 
         self._panel_actividad = self._crear_actividad_reciente()
 
+        # El mismo panel ocupa un ancho estable en ventana normal y
+        # permanece centrado al maximizar, sin quedar pegado a la izquierda.
         self._contenido.controls = [
-            ft.Column([
-                ft.Text("Inicio", size=27, weight=ft.FontWeight.BOLD, color=TINTA),
-                ft.Text("Todo lo que necesitás para gestionar BiblioRed.",
-                        color=APAGADO, size=13),
-            ], spacing=3),
-            self._buscador_general,
-            ft.Row([
-                metrica("Sedes activas", activos,
-                        f"{len(sedes)} registradas", "ACCOUNT_BALANCE_OUTLINED"),
-                metrica("Socios", len(socios),
-                        "Personas registradas", "PEOPLE_OUTLINE_ROUNDED"),
-                metrica("Préstamos activos", prestamos_activos,
-                        "Ejemplares en circulación", "AUTO_STORIES_OUTLINED"),
-                metrica("Reservas pendientes", reservas_pendientes,
-                        "Solicitudes en espera", "EVENT_AVAILABLE_OUTLINED"),
-            ], spacing=11, wrap=False),
-            self._panel_accesos,
-            self._panel_resultados,
-            self._panel_actividad,
+            ft.Row(
+                controls=[
+                    ft.Column(
+                        controls=[
+                    ft.Column([
+                        ft.Text("Inicio", size=27, weight=ft.FontWeight.BOLD, color=TINTA),
+                        ft.Text("Todo lo que necesitás para gestionar BiblioRed.",
+                                color=APAGADO, size=13),
+                    ], spacing=3),
+                    self._buscador_general,
+                    ft.Row([
+                        metrica("Sedes activas", activos,
+                                f"{len(sedes)} registradas", "ACCOUNT_BALANCE_OUTLINED"),
+                        metrica("Socios", len(socios),
+                                "Personas registradas", "PEOPLE_OUTLINE_ROUNDED"),
+                        metrica("Préstamos activos", prestamos_activos,
+                                "Ejemplares en circulación", "AUTO_STORIES_OUTLINED"),
+                        metrica("Reservas pendientes", reservas_pendientes,
+                                "Solicitudes en espera", "EVENT_AVAILABLE_OUTLINED"),
+                    ], spacing=11, wrap=False),
+                    self._panel_accesos,
+                    self._panel_resultados,
+                    self._panel_actividad,
+
+                        ],
+                        spacing=12,
+                        width=ANCHO
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                spacing=0
+            )
         ]
         self._post()
 
