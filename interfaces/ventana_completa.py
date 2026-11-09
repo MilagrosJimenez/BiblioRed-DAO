@@ -567,6 +567,8 @@ class VentanaCompleta(VentanaFlet):
         )
 
     def _mostrar_prestamos(self, e=None):
+        self._contenido.scroll = ft.ScrollMode.AUTO
+        self._contenido.spacing = 16
         pantalla = VentanaPrestamos(
             self._page,
             self._mostrar_prestamos
@@ -583,6 +585,8 @@ class VentanaCompleta(VentanaFlet):
         self._post()
 
     def _mostrar_devoluciones(self, e=None):
+        self._contenido.scroll = ft.ScrollMode.AUTO
+        self._contenido.spacing = 16
         pantalla = VentanaDevoluciones(self._page)
 
         self._contenido.controls = [
@@ -596,6 +600,8 @@ class VentanaCompleta(VentanaFlet):
         self._post()
 
     def _mostrar_reservas(self, e=None):
+        self._contenido.scroll = ft.ScrollMode.AUTO
+        self._contenido.spacing = 16
         pantalla = VentanaReservas(self._page)
 
         self._contenido.controls = [
@@ -609,28 +615,34 @@ class VentanaCompleta(VentanaFlet):
         self._post()
 
     def _mostrar_inventario(self, e=None):
+        self._contenido.scroll = ft.ScrollMode.AUTO
+        self._contenido.spacing = 16
         pantalla = VentanaConsultas(self._page)
         self._contenido.controls = [
             self._crear_titulo("Inventario por códigos",
                               "Consulta de ejemplares, sede propietaria y ubicación"),
-            pantalla.crear_inventario()
+            centrar(pantalla.crear_inventario())
         ]
         self._post()
 
     def _mostrar_historial_lecturas(self, e=None):
+        self._contenido.scroll = ft.ScrollMode.AUTO
+        self._contenido.spacing = 16
         pantalla = VentanaConsultas(self._page)
         self._contenido.controls = [
             self._crear_titulo("Historial de lecturas",
                               "Préstamos y devoluciones por socio"),
-            pantalla.crear_historial()
+            centrar(pantalla.crear_historial())
         ]
         self._post()
 
     def _mostrar_reportes(self, e=None):
+        self._contenido.scroll = ft.ScrollMode.AUTO
+        self._contenido.spacing = 16
         pantalla = VentanaConsultas(self._page)
         self._contenido.controls = [
             self._crear_titulo("Reportes de BiblioRed",
                               "Cuatro informes definidos en el PDF entregado"),
-            pantalla.crear_reportes()
+            centrar(pantalla.crear_reportes())
         ]
         self._post()
