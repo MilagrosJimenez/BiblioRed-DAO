@@ -3,6 +3,7 @@ import flet as ft
 from datos.base_datos import consultar_sedes, consultar_socios
 from servicios.consultas_bibliored_servicio import ConsultasBiblioredServicio
 from interfaces.ui_moderno import normalizar, personalizar_controles
+from interfaces.diseno_pantallas import ANCHO, ANCHO_INTERIOR
 
 
 class VentanaConsultas:
@@ -22,6 +23,7 @@ class VentanaConsultas:
 
     def _tarjeta(self, titulo, lineas):
         return ft.Container(
+            width=ANCHO_INTERIOR,
             bgcolor="#F1F7FC",
             border_radius=10,
             padding=14,
@@ -36,6 +38,7 @@ class VentanaConsultas:
 
     def _panel(self, titulo, controles):
         return ft.Container(
+            width=ANCHO,
             bgcolor="#FFFFFF",
             padding=20,
             border_radius=12,
@@ -50,12 +53,12 @@ class VentanaConsultas:
         self._codigo = ft.TextField(
             label="Código del ejemplar",
             hint_text="Buscá por código, título, estado o sede...",
-            width=290,
+            width=390,
             on_change=self._buscar_inventario,
             on_submit=self._buscar_inventario,
         )
         self._sede = ft.Dropdown(
-            label="Filtrar por sede propietaria o ubicación", width=290,
+            label="Filtrar por sede propietaria o ubicación", width=300,
             value="todas",
             on_select=self._buscar_inventario,
             options=[ft.DropdownOption(key="todas", text="Todas las sedes")] + [
@@ -99,7 +102,7 @@ class VentanaConsultas:
 
     def crear_historial(self):
         self._socio = ft.Dropdown(
-            label="Socio", width=360,
+            label="Socio", width=640,
             options=[
                 ft.DropdownOption(
                     key=str(s[0]), text=f"{s[3]}, {s[2]} - DNI {s[1]}"
@@ -111,7 +114,7 @@ class VentanaConsultas:
             ft.Row([
                 self._socio,
                 ft.Button("Consultar historial", on_click=self._buscar_historial)
-            ], wrap=True),
+            ], spacing=14),
             self._resultados
         ])
 
@@ -138,8 +141,8 @@ class VentanaConsultas:
                 archivo = generar_reporte(clave)
                 self._dialogo(
                     "Reporte generado",
-                    "PDF guardado en:\\n" + archivo +
-                    "\\n\\nAbrilo desde el Explorador de archivos."
+                    "PDF guardado en:\n" + archivo +
+                    "\n\nAbrilo desde el Explorador de archivos."
                 )
             except ModuleNotFoundError as error:
                 self._dialogo(
@@ -152,6 +155,7 @@ class VentanaConsultas:
 
         tarjetas = [
             ft.Container(
+                width=ANCHO_INTERIOR,
                 bgcolor="#F1F7FC",
                 border_radius=10,
                 padding=14,

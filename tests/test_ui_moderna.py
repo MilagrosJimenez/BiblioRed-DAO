@@ -642,10 +642,16 @@ class PruebaNavegacionCompleta(unittest.TestCase):
             self.assertEqual(catalogo._modo, "consultar")
             devoluciones = VentanaDevoluciones(app._page)
             devoluciones.crear_contenido()
+            self.assertEqual(devoluciones._boton_devoluciones.bgcolor, "#2563EB")
             devoluciones._cambiar("retornos")
+            self.assertEqual(devoluciones._boton_retornos.bgcolor, "#2563EB")
+            self.assertEqual(devoluciones._boton_devoluciones.bgcolor, "#FFFFFF")
             reservas = VentanaReservas(app._page)
             reservas.crear_contenido()
+            self.assertEqual(reservas._boton_disponibilidad.bgcolor, "#2563EB")
             reservas._cambiar("reservas")
+            self.assertEqual(reservas._boton_reservas.bgcolor, "#2563EB")
+            self.assertEqual(reservas._boton_disponibilidad.bgcolor, "#FFFFFF")
         finally:
             for p in reversed(parches):
                 p.stop()
@@ -797,6 +803,111 @@ class PruebasListadosCompactos(unittest.TestCase):
 
         recorrer(catalogo._zona)
         recorrer(contenido_solicitudes)
+
+
+
+class PruebasPresentacionSegundaEtapa(unittest.TestCase):
+    def test_organizacion_de_alta_consulta_y_busqueda(self):
+        from types import SimpleNamespace
+        from interfaces.diseno_pantallas import (
+            ANCHO, ANCHO_INTERIOR, preparar_pantalla_segunda_etapa
+        )
+
+        for tipo in ("prestamos", "devoluciones", "retornos", "reservas"):
+            with self.subTest(modulo=tipo):
+                page = PaginaFalsa()
+                p = SimpleNamespace(_modo="consultar")
+                titulo = ft.Text("Nuevo registro")
+                ayuda = ft.Text("Descripción")
+                nota = ft.Text("Ayuda")
+                boton = ft.Button("Guardar")
+                if tipo == "prestamos":
+                    p._solicitud = ft.Dropdown()
+                    p._plazo = ft.Dropdown()
+                    campos = [p._solicitud, p._plazo, nota, boton]
+                elif tipo == "devoluciones":
+                    p._prestamo = ft.Dropdown()
+                    p._estado_fisico = ft.Dropdown()
+                    p._observaciones = ft.TextField()
+                    campos = [
+                        p._prestamo, p._estado_fisico,
+                        p._observaciones, boton, nota
+                    ]
+                elif tipo == "retornos":
+                    p._devolucion = ft.Dropdown()
+                    campos = [p._devolucion, boton, nota]
+                else:
+                    p._socio = ft.Dropdown()
+                    p._libro = ft.Dropdown()
+                    p._sede = ft.Dropdown()
+                    campos = [p._socio, p._libro, p._sede, boton]
+
+                formulario = ft.Container(
+                    content=ft.Column([titulo, ayuda, *campos])
+                )
+                registro = ft.Column([
+                    ft.Container(content=ft.Text("Ana - POO-001")),
+                    ft.Container(content=ft.Text("Juan - POO-002")),
+                ])
+                listado = ft.Container(content=ft.Column([
+                    ft.Text("Registros"), registro
+                ]))
+                vista = ft.Row([formulario, listado])
+                bloque = preparar_pantalla_segunda_etapa(
+                    vista, p, page, tipo, "Registrar", "Consultar"
+                )
+                self.assertEqual(formulario.width, ANCHO)
+                self.assertEqual(listado.width, ANCHO)
+                self.assertEqual(registro.controls[0].width, ANCHO_INTERIOR)
+                self.assertEqual(p._modo, "consultar")
+                self.assertIs(
+                    bloque.controls[1].controls[0].controls[0], listado
+                )
+                self.assertEqual(len(bloque.controls[0].controls), 2)
+
+                buscador = listado.content.controls[1]
+                self.assertIsInstance(buscador, ft.Row)
+                campo = buscador.controls[0]
+                campo.value = "poo-002"
+                campo.on_change(None)
+                self.assertEqual(len(registro.controls), 1)
+
+                bloque.controls[0].controls[0].on_click(None)
+                self.assertEqual(p._modo, "registrar")
+                self.assertIs(
+                    bloque.controls[1].controls[0].controls[0], formulario
+                )
+                bloque.controls[0].controls[1].on_click(None)
+                self.assertEqual(p._modo, "consultar")
+                self.assertEqual(len(registro.controls), 1)
+                self.assertGreaterEqual(page.actualizaciones, 3)
+
+    def test_consultas_de_segunda_etapa_se_centran_en_el_mismo_ancho(self):
+        from unittest.mock import patch
+        from interfaces.ventana_consultas import VentanaConsultas
+        from interfaces.diseno_pantallas import ANCHO, ANCHO_INTERIOR
+
+        with patch(
+            "interfaces.ventana_consultas.consultar_sedes", return_value=[]
+        ), patch(
+            "interfaces.ventana_consultas.consultar_socios", return_value=[]
+        ), patch(
+            "interfaces.ventana_consultas.ConsultasBiblioredServicio.inventario",
+            return_value=[]
+        ):
+            pantalla = VentanaConsultas(PaginaFalsa())
+            inventario = pantalla.crear_inventario()
+            historial = pantalla.crear_historial()
+            self.assertEqual(inventario.width, ANCHO)
+            self.assertEqual(historial.width, ANCHO)
+        with patch(
+            "datos.consultas_bibliored_datos.REPORTES", {
+                "prestamos": ("Préstamos por sede", [], [])
+            }
+        ):
+            reportes = pantalla.crear_reportes()
+            self.assertEqual(reportes.width, ANCHO)
+            self.assertEqual(reportes.content.controls[2].width, ANCHO_INTERIOR)
 
 
 if __name__ == "__main__":

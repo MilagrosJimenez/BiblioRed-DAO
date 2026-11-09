@@ -2,6 +2,9 @@
 import flet as ft
 from interfaces.ui_moderno import icono_accion
 from interfaces.ui_moderno import modernizar, normalizar
+from interfaces.diseno_pantallas import (
+    ANCHO, ANCHO_INTERIOR, centrar, preparar_pantalla_segunda_etapa,
+)
 
 from servicios.reservas_servicio import ReservasServicio
 
@@ -15,53 +18,50 @@ class VentanaReservas:
         self._azul = "#153D63"
         self._celeste = "#63BDEB"
         self._seccion = "disponibilidad"
+        self._modo = "consultar"
 
     def crear_contenido(self):
-        self._zona = ft.Column(
-            controls=[],
-            spacing=15
+        self._zona = ft.Column(controls=[], spacing=15)
+        self._boton_disponibilidad = ft.Button(
+            "Consultar disponibilidad",
+            on_click=lambda e: self._cambiar("disponibilidad")
         )
-
+        self._boton_reservas = ft.Button(
+            "Gestionar reservas",
+            on_click=lambda e: self._cambiar("reservas")
+        )
         self._dibujar()
+        return ft.Column([
+            ft.Row([self._boton_disponibilidad, self._boton_reservas],
+                   spacing=12),
+            self._zona
+        ], spacing=16)
 
-        return ft.Column(
-            controls=[
-                ft.Row(
-                    controls=[
-                        ft.Button(
-                            "Consultar disponibilidad",
-                            on_click=lambda e: self._cambiar("disponibilidad"),
-                            bgcolor="#BCE7FF",
-                            color=self._azul
-                        ),
-                        ft.Button(
-                            "Gestionar reservas",
-                            on_click=lambda e: self._cambiar("reservas"),
-                            bgcolor="#BCE7FF",
-                            color=self._azul
-                        )
-                    ],
-                    spacing=10,
-                    wrap=True
-                ),
-                self._zona
-            ],
-            spacing=16
-        )
+    def _actualizar_botones(self):
+        for boton, activo in (
+            (self._boton_disponibilidad, self._seccion == "disponibilidad"),
+            (self._boton_reservas, self._seccion == "reservas"),
+        ):
+            boton.bgcolor = "#2563EB" if activo else "#FFFFFF"
+            boton.color = "#FFFFFF" if activo else "#142B49"
 
     def _cambiar(self, seccion):
         self._seccion = seccion
+        self._modo = "consultar"
         self._dibujar()
         self._page.update()
 
     def _dibujar(self):
+        self._actualizar_botones()
         if self._seccion == "disponibilidad":
-            self._zona.controls = [
-                self._vista_disponibilidad()
-            ]
+            self._zona.controls = [centrar(self._vista_disponibilidad())]
         else:
+            vista = self._vista_reservas()
             self._zona.controls = [
-                self._vista_reservas()
+                preparar_pantalla_segunda_etapa(
+                    vista, self, self._page, "reservas",
+                    "Registrar reserva", "Consultar reservas"
+                )
             ]
         modernizar(self._zona, self._page)
 
@@ -83,7 +83,7 @@ class VentanaReservas:
         self._filtro = ft.TextField(
             label="Buscar por título o ISBN",
             hint_text="Escribí una letra, un número o parte del título...",
-            width=310,
+            width=410,
             on_change=self._buscar,
             on_submit=self._buscar
         )
@@ -92,7 +92,7 @@ class VentanaReservas:
 
         self._filtro_sede = ft.Dropdown(
             label="Sede",
-            width=230,
+            width=290,
             value="todas",
             on_select=self._buscar,
             options=[
@@ -117,6 +117,7 @@ class VentanaReservas:
         self._actualizar_disponibilidad()
 
         return ft.Container(
+            width=ANCHO,
             bgcolor="#FFFFFF",
             border_radius=12,
             padding=20,
@@ -176,6 +177,7 @@ class VentanaReservas:
 
             tarjetas.append(
                 ft.Container(
+                    width=ANCHO_INTERIOR,
                     bgcolor="#F1F7FC",
                     border_radius=10,
                     padding=14,
@@ -420,6 +422,7 @@ class VentanaReservas:
             )
             return
 
+        self._modo = "consultar"
         self._dibujar()
         self._page.update()
 
@@ -462,6 +465,7 @@ class VentanaReservas:
                 )
                 return
 
+            self._modo = "consultar"
             self._dibujar()
             self._page.update()
 

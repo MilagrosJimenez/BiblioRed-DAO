@@ -2,6 +2,7 @@
 import flet as ft
 from interfaces.ui_moderno import icono_accion
 from interfaces.ui_moderno import modernizar
+from interfaces.diseno_pantallas import preparar_pantalla_segunda_etapa
 
 from servicios.devoluciones_servicio import DevolucionesServicio
 
@@ -14,50 +15,54 @@ class VentanaDevoluciones:
         self._azul = "#153D63"
         self._celeste = "#63BDEB"
         self._seccion = "devoluciones"
+        self._modo = "consultar"
 
     def crear_contenido(self):
-        self._zona = ft.Column(
-            controls=[],
-            spacing=15
+        self._zona = ft.Column(controls=[], spacing=15)
+        self._boton_devoluciones = ft.Button(
+            "Registrar devolución",
+            on_click=lambda e: self._cambiar("devoluciones")
         )
-
+        self._boton_retornos = ft.Button(
+            "Remitos de regreso",
+            on_click=lambda e: self._cambiar("retornos")
+        )
         self._dibujar()
+        return ft.Column([
+            ft.Row([self._boton_devoluciones, self._boton_retornos],
+                   spacing=12),
+            self._zona
+        ], spacing=15)
 
-        return ft.Column(
-            controls=[
-                ft.Row(
-                    controls=[
-                        ft.Button(
-                            "Registrar devolución",
-                            on_click=lambda e: self._cambiar("devoluciones"),
-                            bgcolor="#BCE7FF",
-                            color=self._azul
-                        ),
-                        ft.Button(
-                            "Remitos de regreso",
-                            on_click=lambda e: self._cambiar("retornos"),
-                            bgcolor="#BCE7FF",
-                            color=self._azul
-                        )
-                    ],
-                    spacing=12
-                ),
-                self._zona
-            ],
-            spacing=15
-        )
+    def _actualizar_botones(self):
+        for boton, activo in (
+            (self._boton_devoluciones, self._seccion == "devoluciones"),
+            (self._boton_retornos, self._seccion == "retornos"),
+        ):
+            boton.bgcolor = "#2563EB" if activo else "#FFFFFF"
+            boton.color = "#FFFFFF" if activo else "#142B49"
 
     def _cambiar(self, seccion):
         self._seccion = seccion
+        self._modo = "consultar"
         self._dibujar()
         self._page.update()
 
     def _dibujar(self):
+        self._actualizar_botones()
         if self._seccion == "devoluciones":
-            self._zona.controls = [self._vista_devoluciones()]
+            vista = self._vista_devoluciones()
+            panel = preparar_pantalla_segunda_etapa(
+                vista, self, self._page, "devoluciones",
+                "Registrar devolución", "Consultar devoluciones"
+            )
         else:
-            self._zona.controls = [self._vista_retornos()]
-
+            vista = self._vista_retornos()
+            panel = preparar_pantalla_segunda_etapa(
+                vista, self, self._page, "retornos",
+                "Preparar regreso", "Consultar retornos"
+            )
+        self._zona.controls = [panel]
         modernizar(self._zona, self._page)
 
     def _mensaje(self, titulo, texto):
@@ -241,6 +246,7 @@ class VentanaDevoluciones:
             )
             return
 
+        self._modo = "consultar"
         self._dibujar()
         self._page.update()
 
@@ -435,6 +441,7 @@ class VentanaDevoluciones:
             )
             return
 
+        self._modo = "consultar"
         self._dibujar()
         self._page.update()
 
@@ -475,6 +482,7 @@ class VentanaDevoluciones:
                 )
                 return
 
+            self._modo = "consultar"
             self._dibujar()
             self._page.update()
 

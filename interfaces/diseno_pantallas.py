@@ -224,3 +224,91 @@ def preparar_listado_tarjetas(listado):
             for tarjeta in elemento.controls:
                 if isinstance(tarjeta, ft.Container):
                     tarjeta.width = ANCHO_INTERIOR
+
+
+def preparar_pantalla_segunda_etapa(vista, pantalla, page, tipo,
+                                   registrar, consultar):
+    """Separa alta y consulta en los módulos restantes.
+
+    Conserva campos, validaciones y callbacks originales; modifica
+    únicamente su presentación. No vuelve a consultar la base de datos.
+    """
+    formulario, listado = vista.controls
+    controles = formulario.content.controls
+    if tipo == "prestamos":
+        titulo, ayuda, _, _, explicacion, boton = controles
+        pantalla._solicitud.width = 590
+        pantalla._plazo.width = 238
+        nuevos = [
+            titulo, ayuda,
+            ft.Row([pantalla._solicitud, pantalla._plazo], spacing=14),
+            explicacion, boton,
+        ]
+    elif tipo == "devoluciones":
+        titulo, ayuda, _, _, _, boton, explicacion = controles
+        pantalla._prestamo.width = 565
+        pantalla._estado_fisico.width = 263
+        pantalla._observaciones.width = 842
+        nuevos = [
+            titulo, ayuda,
+            ft.Row([pantalla._prestamo, pantalla._estado_fisico], spacing=14),
+            pantalla._observaciones, boton, explicacion,
+        ]
+    elif tipo == "retornos":
+        titulo, ayuda, selector, boton, nota = controles
+        selector.width = 842
+        nuevos = [titulo, ayuda, selector, boton, nota]
+    elif tipo == "reservas":
+        titulo, ayuda, _, _, _, boton = controles
+        pantalla._socio.width = 414
+        pantalla._libro.width = 414
+        pantalla._sede.width = 842
+        nuevos = [
+            titulo, ayuda,
+            ft.Row([pantalla._socio, pantalla._libro], spacing=14),
+            pantalla._sede, boton,
+        ]
+    else:
+        raise ValueError("Formulario desconocido: " + tipo)
+
+    _organizar_panel(formulario, nuevos)
+    preparar_listado_tarjetas(listado)
+    registros = next(
+        (c for c in listado.content.controls if isinstance(c, ft.Column)),
+        None
+    )
+    if registros is not None and any(
+        isinstance(c, ft.Container) for c in registros.controls
+    ):
+        titulo_lista = listado.content.controls[0]
+        listado.content.controls.insert(
+            1, buscador_de_tarjetas(
+                registros, page, sugerencia_de_busqueda([titulo_lista.value])
+            )
+        )
+
+    boton_registrar = ft.Button(registrar)
+    boton_consultar = ft.Button(consultar)
+    zona = ft.Column(spacing=0)
+
+    def seleccionar(modo, actualizar=True):
+        pantalla._modo = modo
+        for boton, activo in (
+            (boton_registrar, modo == "registrar"),
+            (boton_consultar, modo == "consultar"),
+        ):
+            boton.bgcolor = "#2563EB" if activo else "#FFFFFF"
+            boton.color = "#FFFFFF" if activo else "#142B49"
+        zona.controls = [
+            centrar(formulario if modo == "registrar" else listado)
+        ]
+        if actualizar:
+            page.update()
+
+    boton_registrar.on_click = lambda e: seleccionar("registrar")
+    boton_consultar.on_click = lambda e: seleccionar("consultar")
+    seleccionar(getattr(pantalla, "_modo", "consultar"), actualizar=False)
+    return ft.Column([
+        ft.Row([boton_registrar, boton_consultar], spacing=12),
+        zona,
+    ], spacing=13)
