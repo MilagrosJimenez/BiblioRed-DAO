@@ -1,6 +1,7 @@
 
 from datetime import date
 import flet as ft
+from interfaces.ui_moderno import selector_con_busqueda
 from interfaces.ui_moderno import icono_accion
 from interfaces.diseno_pantallas import preparar_pantalla_segunda_etapa
 
@@ -21,7 +22,7 @@ class VentanaPrestamos:
     def crear_contenido(self):
         solicitudes = self._servicio.listar_solicitudes_listas()
 
-        self._solicitud = ft.Dropdown(
+        self._solicitud = selector_con_busqueda(
             label="Solicitud lista para entregar",
             options=[
                 ft.DropdownOption(
