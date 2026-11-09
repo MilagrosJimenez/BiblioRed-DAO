@@ -88,3 +88,62 @@ solo porque haya aprobado GitHub Actions.
 - Si aparece una diferencia entre el PDF, el código y una captura, registrar
   cuál es y corregirla antes de declarar el módulo terminado.
 - Los módulos restantes se verifican en una segunda etapa.
+
+
+---
+
+## Segunda etapa — seis módulos restantes
+
+Continuar con el ejemplar `POO-001-DAO` recibido en Biblioteca UTN desde
+Biblioteca Prueba DAO (9001), asociado a una solicitud interbibliotecaria
+pendiente de entrega a Lucía Torres. No reiniciar ni borrar `biblioteca.db`.
+
+### Revisión visual previa
+En ventana normal y maximizada, comprobar que los formularios y listados
+ocupan el mismo ancho que los primeros seis módulos, se mantienen centrados
+y no cortan controles. Verificar que las pantallas con alta/consulta los
+muestren por separado, que las pestañas activas se distingan y que los
+listados permitan buscar sin perder las acciones.
+
+### 7. Préstamos efectivos
+- Registrar la entrega de la solicitud interbibliotecaria recibida
+  seleccionando un plazo de 14 días.
+- Comprobar que el préstamo aparece Activo y su vencimiento es 14 días
+  después de la entrega (Strategy). El ejemplar queda Prestado.
+- Reabrir el selector: la misma solicitud no debe estar disponible para
+  prestar otra vez. Comprobar la visualización de detalles y la búsqueda.
+
+### 8. Devoluciones
+- Seleccionar el préstamo activo y registrar devolución física en estado Bueno
+  con observación opcional. El préstamo debe cerrarse.
+- Como es una copia de otra sede, gestionar el remito de regreso.
+  Comprobar Empaquetado, En tránsito y Recibido, sus fechas/observaciones
+  y que la ubicación final sea la sede propietaria.
+- Verificar que el ejemplar recupera la disponibilidad únicamente al
+  recibirse el retorno, si está en buen estado.
+
+### 9. Reservas y disponibilidad
+- Buscar el libro por título o ISBN y filtrar por sede; comparar las cantidades.
+- Registrar reserva con socio habilitado, título y sede activos.
+- Verificar las operaciones atender y cancelar en registros separados,
+  incluyendo las restricciones de prioridad y duplicados.
+- Comprobar que una reserva atendida genera una solicitud de préstamo.
+
+### 10. Inventario por códigos
+- Buscar por código único y filtrar por sede propietaria o ubicación.
+- Comprobar que se distinguen estado, sede propietaria y ubicación actual,
+  especialmente antes y después de un traslado.
+
+### 11. Historial de lecturas
+- Elegir al socio que recibió el préstamo y consultar título, entrega,
+  vencimiento, devolución y estado; no mezclar registros de otros socios.
+
+### 12. Reportes
+- Generar los cuatro informes PDF; comprobar que se guardan bajo
+  `reportes_generados/`, se abren y sus datos corresponden a la base
+  de prueba. No confundir estos informes con el documento de referencia
+  entregado a la cátedra.
+
+No ejecutar las devoluciones antes de verificar el préstamo: las pruebas
+deben seguir el orden del ciclo de vida. Las pruebas automáticas utilizan
+SQLite temporal y no deben modificar la base local.
