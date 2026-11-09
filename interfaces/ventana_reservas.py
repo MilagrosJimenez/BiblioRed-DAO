@@ -21,37 +21,29 @@ class VentanaReservas:
         self._modo = "consultar"
 
     def crear_contenido(self):
-        self._zona = ft.Column(
-            controls=[],
-            spacing=15
+        self._zona = ft.Column(controls=[], spacing=15)
+        self._boton_disponibilidad = ft.Button(
+            "Consultar disponibilidad",
+            on_click=lambda e: self._cambiar("disponibilidad")
         )
-
+        self._boton_reservas = ft.Button(
+            "Gestionar reservas",
+            on_click=lambda e: self._cambiar("reservas")
+        )
         self._dibujar()
+        return ft.Column([
+            ft.Row([self._boton_disponibilidad, self._boton_reservas],
+                   spacing=12),
+            self._zona
+        ], spacing=16)
 
-        return ft.Column(
-            controls=[
-                ft.Row(
-                    controls=[
-                        ft.Button(
-                            "Consultar disponibilidad",
-                            on_click=lambda e: self._cambiar("disponibilidad"),
-                            bgcolor="#BCE7FF",
-                            color=self._azul
-                        ),
-                        ft.Button(
-                            "Gestionar reservas",
-                            on_click=lambda e: self._cambiar("reservas"),
-                            bgcolor="#BCE7FF",
-                            color=self._azul
-                        )
-                    ],
-                    spacing=10,
-                    wrap=True
-                ),
-                self._zona
-            ],
-            spacing=16
-        )
+    def _actualizar_botones(self):
+        for boton, activo in (
+            (self._boton_disponibilidad, self._seccion == "disponibilidad"),
+            (self._boton_reservas, self._seccion == "reservas"),
+        ):
+            boton.bgcolor = "#2563EB" if activo else "#FFFFFF"
+            boton.color = "#FFFFFF" if activo else "#142B49"
 
     def _cambiar(self, seccion):
         self._seccion = seccion
@@ -60,6 +52,7 @@ class VentanaReservas:
         self._page.update()
 
     def _dibujar(self):
+        self._actualizar_botones()
         if self._seccion == "disponibilidad":
             self._zona.controls = [centrar(self._vista_disponibilidad())]
         else:
