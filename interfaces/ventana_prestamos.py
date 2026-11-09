@@ -2,6 +2,7 @@
 from datetime import date
 import flet as ft
 from interfaces.ui_moderno import icono_accion
+from interfaces.diseno_pantallas import preparar_pantalla_segunda_etapa
 
 from servicios.prestamos_efectivos_servicio import PrestamosEfectivosServicio
 
@@ -15,6 +16,7 @@ class VentanaPrestamos:
 
         self._azul = "#153D63"
         self._celeste = "#63BDEB"
+        self._modo = "consultar"
 
     def crear_contenido(self):
         solicitudes = self._servicio.listar_solicitudes_listas()
@@ -116,10 +118,14 @@ class VentanaPrestamos:
             )
         )
 
-        return ft.Row(
+        vista = ft.Row(
             controls=[formulario, listado],
             spacing=16,
             vertical_alignment=ft.CrossAxisAlignment.START
+        )
+        return preparar_pantalla_segunda_etapa(
+            vista, self, self._page, "prestamos",
+            "Registrar entrega", "Consultar préstamos"
         )
 
     def _crear_tarjeta(self, datos):
