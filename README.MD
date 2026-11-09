@@ -38,7 +38,6 @@ py main.py
 - `ui_moderno.py`: estilos y filtros de búsqueda compartidos.
 - `diseno_pantallas.py`: distribución y tamaños comunes de formularios/listados.
 - `busqueda_general.py`: busca **secciones del menú lateral** desde Inicio, no personas ni ejemplares.
-- `ventana_principal_tkinter.py`: **versión anterior con Tkinter**, conservada como referencia. **No se ejecuta ni se importa** desde `main.py`; la interfaz actual es Flet.
 
 Los nombres `clases`, `datos`, `servicios` e `interfaces` representan responsabilidades distintas. No son cuatro programas: son partes de la misma aplicación.
 
