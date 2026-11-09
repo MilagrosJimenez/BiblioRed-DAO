@@ -1,5 +1,6 @@
 
 import flet as ft
+from interfaces.ui_moderno import selector_con_busqueda
 from interfaces.ui_moderno import icono_accion
 from interfaces.ui_moderno import modernizar
 from interfaces.diseno_pantallas import preparar_pantalla_segunda_etapa
@@ -82,12 +83,12 @@ class VentanaDevoluciones:
     def _vista_devoluciones(self):
         prestamos = self._servicio.listar_prestamos_activos()
 
-        self._prestamo = ft.Dropdown(
+        self._prestamo = selector_con_busqueda(
             label="Préstamo activo",
             options=[
                 ft.DropdownOption(
                     key=str(p[0]),
-                    text=f"N.º {p[0]} - {p[2]} - {p[1]}"
+                    text=f"N.º {p[0]} - {p[2]} - {p[3]} - {p[1]}"
                 )
                 for p in prestamos
             ]
@@ -260,7 +261,7 @@ class VentanaDevoluciones:
     def _vista_retornos(self):
         pendientes = self._servicio.listar_pendientes_retorno()
 
-        self._devolucion = ft.Dropdown(
+        self._devolucion = selector_con_busqueda(
             label="Devolución pendiente de retorno",
             options=[
                 ft.DropdownOption(
