@@ -1,5 +1,6 @@
 
 import flet as ft
+from interfaces.ui_moderno import selector_con_busqueda
 from interfaces.ui_moderno import icono_accion
 from interfaces.ui_moderno import modernizar, normalizar
 from interfaces.diseno_pantallas import (
@@ -90,7 +91,7 @@ class VentanaReservas:
 
         sedes = self._servicio.listar_sedes_activas()
 
-        self._filtro_sede = ft.Dropdown(
+        self._filtro_sede = selector_con_busqueda(
             label="Sede",
             width=290,
             value="todas",
@@ -220,8 +221,8 @@ class VentanaReservas:
         libros = self._servicio.listar_libros()
         sedes = self._servicio.listar_sedes_activas()
 
-        self._socio = ft.Dropdown(
-            label="Socio habilitado",
+        self._socio = selector_con_busqueda(
+            label="Socio (nombre, apellido o DNI)",
             options=[
                 ft.DropdownOption(
                     key=str(s[0]),
@@ -231,7 +232,7 @@ class VentanaReservas:
             ]
         )
 
-        self._libro = ft.Dropdown(
+        self._libro = selector_con_busqueda(
             label="Título a reservar",
             options=[
                 ft.DropdownOption(
@@ -242,7 +243,7 @@ class VentanaReservas:
             ]
         )
 
-        self._sede = ft.Dropdown(
+        self._sede = selector_con_busqueda(
             label="Biblioteca donde lo retirará",
             options=[
                 ft.DropdownOption(

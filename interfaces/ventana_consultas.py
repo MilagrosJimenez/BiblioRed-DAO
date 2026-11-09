@@ -1,5 +1,6 @@
 """Pantallas complementarias: inventario, historial y reportes del alcance."""
 import flet as ft
+from interfaces.ui_moderno import selector_con_busqueda
 from datos.base_datos import consultar_sedes, consultar_socios
 from servicios.consultas_bibliored_servicio import ConsultasBiblioredServicio
 from interfaces.ui_moderno import normalizar, personalizar_controles
@@ -57,7 +58,7 @@ class VentanaConsultas:
             on_change=self._buscar_inventario,
             on_submit=self._buscar_inventario,
         )
-        self._sede = ft.Dropdown(
+        self._sede = selector_con_busqueda(
             label="Filtrar por sede propietaria o ubicación", width=300,
             value="todas",
             on_select=self._buscar_inventario,
@@ -101,8 +102,8 @@ class VentanaConsultas:
             self._page.update()
 
     def crear_historial(self):
-        self._socio = ft.Dropdown(
-            label="Socio", width=640,
+        self._socio = selector_con_busqueda(
+            label="Socio (nombre, apellido o DNI)", width=640,
             options=[
                 ft.DropdownOption(
                     key=str(s[0]), text=f"{s[3]}, {s[2]} - DNI {s[1]}"
