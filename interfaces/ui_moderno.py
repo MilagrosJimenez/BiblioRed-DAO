@@ -17,6 +17,23 @@ CLARO = "#F7FAFE"
 CELESTE = "#DCEFFC"
 
 
+def selector_con_busqueda(*, label, options, **kwargs):
+    """Selector de registros con búsqueda por los datos visibles.
+
+    El texto escrito filtra coincidencias sin recorrer toda la lista.
+    Al elegir una opción, Dropdown.value sigue siendo su clave (ID);
+    las reglas de negocio y los servicios no cambian.
+    """
+    return ft.Dropdown(
+        label=label,
+        options=options,
+        editable=True,
+        enable_filter=True,
+        enable_search=True,
+        **kwargs,
+    )
+
+
 def icono_accion(tipo, descripcion, on_click, disabled=False):
     """Acción compacta uniforme. El tooltip explica la operación antes de tocarla."""
     iconos = {
