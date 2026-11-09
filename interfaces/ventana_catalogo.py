@@ -1,5 +1,6 @@
 
 import flet as ft
+from interfaces.ui_moderno import selector_con_busqueda
 from interfaces.ui_moderno import icono_accion
 from interfaces.ui_moderno import modernizar
 from interfaces.diseno_pantallas import (
@@ -289,8 +290,8 @@ class VentanaCatalogo:
             label="Código único del ejemplar"
         )
 
-        self._libro = ft.Dropdown(
-            label="Libro",
+        self._libro = selector_con_busqueda(
+            label="Libro (título o ISBN)",
             width=260,
             options=[
                 ft.DropdownOption(
@@ -301,13 +302,13 @@ class VentanaCatalogo:
             ]
         )
 
-        self._sede = ft.Dropdown(
+        self._sede = selector_con_busqueda(
             label="Sede",
             width=260,
             options=[
                 ft.DropdownOption(
                     key=str(s[0]),
-                    text=s[1]
+                    text=f"{s[1]} (ID {s[0]})"
                 )
                 for s in sedes
             ]
