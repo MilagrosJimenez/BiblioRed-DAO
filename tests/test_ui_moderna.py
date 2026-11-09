@@ -642,10 +642,16 @@ class PruebaNavegacionCompleta(unittest.TestCase):
             self.assertEqual(catalogo._modo, "consultar")
             devoluciones = VentanaDevoluciones(app._page)
             devoluciones.crear_contenido()
+            self.assertEqual(devoluciones._boton_devoluciones.bgcolor, "#2563EB")
             devoluciones._cambiar("retornos")
+            self.assertEqual(devoluciones._boton_retornos.bgcolor, "#2563EB")
+            self.assertEqual(devoluciones._boton_devoluciones.bgcolor, "#FFFFFF")
             reservas = VentanaReservas(app._page)
             reservas.crear_contenido()
+            self.assertEqual(reservas._boton_disponibilidad.bgcolor, "#2563EB")
             reservas._cambiar("reservas")
+            self.assertEqual(reservas._boton_reservas.bgcolor, "#2563EB")
+            self.assertEqual(reservas._boton_disponibilidad.bgcolor, "#FFFFFF")
         finally:
             for p in reversed(parches):
                 p.stop()
