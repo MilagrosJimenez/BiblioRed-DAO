@@ -2,6 +2,7 @@
 import flet as ft
 from interfaces.ui_moderno import icono_accion
 from interfaces.ui_moderno import modernizar
+from interfaces.diseno_pantallas import preparar_pantalla_segunda_etapa
 
 from servicios.devoluciones_servicio import DevolucionesServicio
 
@@ -14,6 +15,7 @@ class VentanaDevoluciones:
         self._azul = "#153D63"
         self._celeste = "#63BDEB"
         self._seccion = "devoluciones"
+        self._modo = "consultar"
 
     def crear_contenido(self):
         self._zona = ft.Column(
@@ -49,15 +51,24 @@ class VentanaDevoluciones:
 
     def _cambiar(self, seccion):
         self._seccion = seccion
+        self._modo = "consultar"
         self._dibujar()
         self._page.update()
 
     def _dibujar(self):
         if self._seccion == "devoluciones":
-            self._zona.controls = [self._vista_devoluciones()]
+            vista = self._vista_devoluciones()
+            panel = preparar_pantalla_segunda_etapa(
+                vista, self, self._page, "devoluciones",
+                "Registrar devolución", "Consultar devoluciones"
+            )
         else:
-            self._zona.controls = [self._vista_retornos()]
-
+            vista = self._vista_retornos()
+            panel = preparar_pantalla_segunda_etapa(
+                vista, self, self._page, "retornos",
+                "Preparar regreso", "Consultar retornos"
+            )
+        self._zona.controls = [panel]
         modernizar(self._zona, self._page)
 
     def _mensaje(self, titulo, texto):
@@ -241,6 +252,7 @@ class VentanaDevoluciones:
             )
             return
 
+        self._modo = "consultar"
         self._dibujar()
         self._page.update()
 
@@ -435,6 +447,7 @@ class VentanaDevoluciones:
             )
             return
 
+        self._modo = "consultar"
         self._dibujar()
         self._page.update()
 
@@ -475,6 +488,7 @@ class VentanaDevoluciones:
                 )
                 return
 
+            self._modo = "consultar"
             self._dibujar()
             self._page.update()
 
