@@ -1,5 +1,6 @@
 
 import flet as ft
+from interfaces.ui_moderno import selector_con_busqueda
 from interfaces.ui_moderno import icono_accion
 
 from servicios.remitos_servicio import RemitosServicio
@@ -18,13 +19,13 @@ class VentanaRemitos:
     def crear_contenido(self):
         pendientes = self._servicio.listar_pendientes()
 
-        self._solicitud = ft.Dropdown(
+        self._solicitud = selector_con_busqueda(
             label="Solicitud pendiente de traslado",
             options=[
                 ft.DropdownOption(
                     key=str(datos[0]),
                     text=(
-                        f"N.º {datos[0]} - {datos[1]} - "
+                        f"N.º {datos[0]} - {datos[1]} - {datos[2]} - "
                         f"{datos[3]} a {datos[4]}"
                     )
                 )
