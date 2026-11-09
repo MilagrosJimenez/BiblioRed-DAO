@@ -1,3 +1,8 @@
+"""Versión anterior de interfaz Tkinter. Conservada como referencia histórica.
+
+BiblioRed se ejecuta actualmente con Flet desde main.py.
+Este módulo no es importado por la aplicación actual.
+"""
 
 import os
 import tkinter as tk

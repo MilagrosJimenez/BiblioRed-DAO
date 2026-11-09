@@ -1,6 +1,6 @@
-# BiblioRed — cierre de los primeros seis módulos
+# BiblioRed — plan de pruebas de los primeros seis módulos
 
-**Contrato:** documento «BiblioRed final final.pdf» del Grupo 73, alcance 1–5,
+**Contrato:** documento de referencia de desarrollo entregado por el Grupo 73, alcance 1–5,
 más pantalla de Inicio. El PDF sigue siendo la referencia; este archivo
 describe cómo comprobar la implementación, no agrega procesos.
 
