@@ -859,7 +859,7 @@ class PruebasPresentacionSegundaEtapa(unittest.TestCase):
                 )
                 self.assertEqual(len(bloque.controls[0].controls), 2)
 
-                buscador = listado.content.controls[1].controls[0]
+                buscador = listado.content.controls[1]
                 self.assertIsInstance(buscador, ft.Row)
                 campo = buscador.controls[0]
                 campo.value = "poo-002"
@@ -898,7 +898,7 @@ class PruebasPresentacionSegundaEtapa(unittest.TestCase):
         ):
             reportes = pantalla.crear_reportes()
             self.assertEqual(reportes.width, ANCHO)
-            self.assertEqual(reportes.content.controls[1].width, ANCHO_INTERIOR)
+            self.assertEqual(reportes.content.controls[2].width, ANCHO_INTERIOR)
 
 
 if __name__ == "__main__":
