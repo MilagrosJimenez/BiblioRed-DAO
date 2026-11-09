@@ -885,6 +885,9 @@ class PruebasPresentacionSegundaEtapa(unittest.TestCase):
             "interfaces.ventana_consultas.consultar_sedes", return_value=[]
         ), patch(
             "interfaces.ventana_consultas.consultar_socios", return_value=[]
+        ), patch(
+            "interfaces.ventana_consultas.ConsultasBiblioredServicio.inventario",
+            return_value=[]
         ):
             pantalla = VentanaConsultas(PaginaFalsa())
             inventario = pantalla.crear_inventario()
