@@ -1,5 +1,6 @@
 
 import flet as ft
+from interfaces.ui_moderno import selector_con_busqueda
 from interfaces.ui_moderno import icono_accion
 
 from servicios.prestamos_servicio import PrestamosServicio
@@ -19,8 +20,8 @@ class VentanaSolicitudes:
         sedes = self._servicio.listar_sedes_activas()
         ejemplares = self._servicio.listar_ejemplares_disponibles()
 
-        self._socio = ft.Dropdown(
-            label="Socio habilitado",
+        self._socio = selector_con_busqueda(
+            label="Socio (nombre, apellido o DNI)",
             width=305,
             options=[
                 ft.DropdownOption(
@@ -31,19 +32,19 @@ class VentanaSolicitudes:
             ]
         )
 
-        self._ejemplar = ft.Dropdown(
+        self._ejemplar = selector_con_busqueda(
             label="Ejemplar disponible (origen)",
             width=305,
             options=[
                 ft.DropdownOption(
                     key=str(e[0]),
-                    text=f"{e[1]} - {e[2]} - {e[4]}"
+                    text=f"{e[1]} - {e[2]} - ISBN {e[3]} - {e[4]}"
                 )
                 for e in ejemplares
             ]
         )
 
-        self._destino = ft.Dropdown(
+        self._destino = selector_con_busqueda(
             label="Sede destino",
             width=305,
             options=[
