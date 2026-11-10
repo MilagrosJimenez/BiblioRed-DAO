@@ -6,6 +6,7 @@ import os
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from datetime import date
 from unittest.mock import patch
 
@@ -52,6 +53,36 @@ class PruebaPatrones(unittest.TestCase):
             construir_estado("Pendiente")
 
 
+class PruebaCierreConsultas(unittest.TestCase):
+    def test_cierra_conexion_al_consultar(self):
+        conexion = sqlite3.connect(":memory:")
+        try:
+            with patch.object(
+                consultas_bibliored_datos.sqlite3, "connect", return_value=conexion
+            ):
+                self.assertEqual(
+                    consultas_bibliored_datos._consultar("SELECT ?", (42,)),
+                    [(42,)]
+                )
+            with self.assertRaises(sqlite3.ProgrammingError):
+                conexion.execute("SELECT 1")
+        finally:
+            conexion.close()
+
+    def test_cierra_conexion_si_la_consulta_falla(self):
+        conexion = sqlite3.connect(":memory:")
+        try:
+            with patch.object(
+                consultas_bibliored_datos.sqlite3, "connect", return_value=conexion
+            ):
+                with self.assertRaises(sqlite3.OperationalError):
+                    consultas_bibliored_datos._consultar("SELECT * FROM inexistente")
+            with self.assertRaises(sqlite3.ProgrammingError):
+                conexion.execute("SELECT 1")
+        finally:
+            conexion.close()
+
+
 class PruebaConsultas(unittest.TestCase):
     def setUp(self):
         temp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
@@ -76,7 +107,7 @@ class PruebaConsultas(unittest.TestCase):
         prestamos_efectivos_datos.crear_tabla_prestamos()
         devoluciones_datos.crear_tablas_devoluciones()
         reservas_datos.crear_tabla_reservas()
-        with sqlite3.connect(self.ruta) as conexion:
+        with closing(sqlite3.connect(self.ruta)) as conexion, conexion:
             conexion.execute("""
                 INSERT INTO sedes(id_sede,nombre,direccion,telefono,horarios,activa)
                 VALUES(1,'Centro','C','1','8-18',1),(2,'Norte','N','2','8-18',1)
@@ -107,7 +138,7 @@ class PruebaConsultas(unittest.TestCase):
         self.assertEqual(consultas_bibliored_datos.consultar_inventario("OTRO"), [])
 
     def test_lecturas_desde_prestamos(self):
-        with sqlite3.connect(self.ruta) as db:
+        with closing(sqlite3.connect(self.ruta)) as db, db:
             db.execute("""
                 INSERT INTO solicitudes_prestamo(
                     id_socio,id_ejemplar,id_sede_origen,id_sede_destino,tipo,estado
@@ -145,7 +176,7 @@ class PruebaConsultas(unittest.TestCase):
             os.unlink(archivo)
 
     def test_ubicacion_actual_valida_referencia_a_sede(self):
-        with sqlite3.connect(self.ruta) as db:
+        with closing(sqlite3.connect(self.ruta)) as db, db:
             with self.assertRaises(sqlite3.IntegrityError):
                 db.execute("""
                     UPDATE ejemplares SET id_sede_actual = 999
@@ -162,7 +193,7 @@ class PruebaConsultas(unittest.TestCase):
             )
 
     def test_migracion_observaciones_no_pierde_historial(self):
-        with sqlite3.connect(self.ruta) as db:
+        with closing(sqlite3.connect(self.ruta)) as db, db:
             for tabla in ("historial_remitos", "historial_retornos"):
                 columnas = [
                     col[1] for col in db.execute("PRAGMA table_info(" + tabla + ")")

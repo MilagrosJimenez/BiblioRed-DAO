@@ -1,10 +1,11 @@
 """Consultas del alcance entregado: inventario, historial y cuatro reportes."""
 import sqlite3
+from contextlib import closing
 from datos.base_datos import RUTA_BASE_DATOS
 
 
 def _consultar(sql, parametros=()):
-    with sqlite3.connect(RUTA_BASE_DATOS) as conexion:
+    with closing(sqlite3.connect(RUTA_BASE_DATOS)) as conexion:
         return conexion.execute(sql, parametros).fetchall()
 
 

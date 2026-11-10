@@ -9,6 +9,7 @@ import os
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from unittest.mock import patch
 
 from clases.reserva import Reserva
@@ -40,7 +41,7 @@ class PruebasReservasDisponibilidad(unittest.TestCase):
         remitos_datos.crear_tablas_remitos()
         reservas_datos.crear_tabla_reservas()
 
-        with sqlite3.connect(self.ruta) as conexion:
+        with closing(sqlite3.connect(self.ruta)) as conexion, conexion:
             conexion.execute("""
                 INSERT INTO sedes
                     (id_sede, nombre, direccion, telefono, horarios, activa)
@@ -69,7 +70,7 @@ class PruebasReservasDisponibilidad(unittest.TestCase):
         os.unlink(self.ruta)
 
     def estado_ejemplar(self):
-        with sqlite3.connect(self.ruta) as conexion:
+        with closing(sqlite3.connect(self.ruta)) as conexion, conexion:
             return conexion.execute(
                 "SELECT estado FROM ejemplares WHERE id_ejemplar = 1"
             ).fetchone()[0]
@@ -103,7 +104,7 @@ class PruebasReservasDisponibilidad(unittest.TestCase):
         numero = reservas_datos.guardar_reserva(Reserva(1, 1, 1))
         solicitud_id = reservas_datos.atender_reserva(numero)
         self.assertEqual(self.estado_ejemplar(), "Solicitado")
-        with sqlite3.connect(self.ruta) as conexion:
+        with closing(sqlite3.connect(self.ruta)) as conexion, conexion:
             estado = conexion.execute(
                 "SELECT estado FROM reservas WHERE id_reserva = ?", (numero,)
             ).fetchone()[0]
@@ -116,7 +117,7 @@ class PruebasReservasDisponibilidad(unittest.TestCase):
 
         prestamos_datos.cancelar_solicitud(solicitud_id)
         self.assertEqual(self.estado_ejemplar(), "Disponible")
-        with sqlite3.connect(self.ruta) as conexion:
+        with closing(sqlite3.connect(self.ruta)) as conexion, conexion:
             estado, solicitud_vinculada = conexion.execute(
                 "SELECT estado, id_solicitud FROM reservas WHERE id_reserva = ?",
                 (numero,)
@@ -137,7 +138,7 @@ class PruebasReservasDisponibilidad(unittest.TestCase):
         self.assertEqual(self.estado_ejemplar(), "Solicitado")
 
     def test_transito_no_se_cuenta_como_presencia_fisica(self):
-        with sqlite3.connect(self.ruta) as conexion:
+        with closing(sqlite3.connect(self.ruta)) as conexion, conexion:
             conexion.execute("""
                 UPDATE ejemplares
                 SET estado = 'En tránsito', id_sede_actual = 1
@@ -146,7 +147,7 @@ class PruebasReservasDisponibilidad(unittest.TestCase):
         self.assertEqual(self.disponibilidad(1)[5], 0)
         self.assertEqual(self.disponibilidad(1)[6], 0)
 
-        with sqlite3.connect(self.ruta) as conexion:
+        with closing(sqlite3.connect(self.ruta)) as conexion, conexion:
             conexion.execute("""
                 UPDATE ejemplares
                 SET estado = 'Recibido', id_sede_actual = 2
@@ -160,7 +161,7 @@ class PruebasReservasDisponibilidad(unittest.TestCase):
         # El ejemplar pertenece a Centro (1) y se retira en Norte (2).
         numero = reservas_datos.guardar_reserva(Reserva(1, 1, 2))
         solicitud_id = reservas_datos.atender_reserva(numero)
-        with sqlite3.connect(self.ruta) as conexion:
+        with closing(sqlite3.connect(self.ruta)) as conexion, conexion:
             registro = conexion.execute("""
                 SELECT id_sede_origen, id_sede_destino, tipo, estado
                 FROM solicitudes_prestamo
