@@ -6,6 +6,7 @@ import os
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from unittest.mock import patch
 
 from clases.solicitud_prestamo import SolicitudPrestamo
@@ -42,7 +43,7 @@ class PruebasFlujosIntegrales(unittest.TestCase):
         prestamos_efectivos_datos.crear_tabla_prestamos()
         devoluciones_datos.crear_tablas_devoluciones()
         reservas_datos.crear_tabla_reservas()
-        with sqlite3.connect(self.ruta) as db:
+        with closing(sqlite3.connect(self.ruta)) as db, db:
             db.executescript("""
                 INSERT INTO sedes(id_sede,nombre,direccion,telefono,horarios,activa)
                   VALUES (1,'Centro','A','11','8-18',1),
@@ -61,7 +62,7 @@ class PruebasFlujosIntegrales(unittest.TestCase):
         os.unlink(self.ruta)
 
     def estado_ejemplar(self):
-        with sqlite3.connect(self.ruta) as db:
+        with closing(sqlite3.connect(self.ruta)) as db, db:
             return db.execute("""
                 SELECT estado, id_sede_actual FROM ejemplares WHERE id_ejemplar = 1
             """).fetchone()

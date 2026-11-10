@@ -8,6 +8,7 @@ import os
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -134,7 +135,7 @@ class PruebasEtapaUno(unittest.TestCase):
         self.assertEqual(libro[6], 1)
         self.assertEqual(self.servicio_catalogo.listar_ejemplares()[0][5],
                          "Disponible")
-        with sqlite3.connect(self.ruta) as conexion:
+        with closing(sqlite3.connect(self.ruta)) as conexion, conexion:
             sede_actual = conexion.execute("""
                 SELECT id_sede_actual FROM ejemplares WHERE codigo = 'DAO-EJ-01'
             """).fetchone()[0]
@@ -200,7 +201,7 @@ class PruebasEtapaUno(unittest.TestCase):
         self.assertEqual([f[0] for f in historial],
                          ["Empaquetado", "En tránsito", "Recibido"])
         self.assertTrue(all(len(f) == 3 and f[2] for f in historial))
-        with sqlite3.connect(self.ruta) as conexion:
+        with closing(sqlite3.connect(self.ruta)) as conexion, conexion:
             fila = conexion.execute("""
                 SELECT estado, id_sede_actual FROM ejemplares
                 WHERE id_ejemplar = ?
