@@ -59,7 +59,7 @@ py -m unittest discover -s tests -v
 
 Las pruebas automatizadas verifican reglas de negocio, integridad de SQLite, patrones de diseño y construcción de pantallas. También se deben probar las operaciones en Windows, porque las pruebas no garantizan por sí solas que todo se dibuje correctamente.
 
-El recorrido manual de los seis primeros módulos está en `tests/PLAN_DE_PRUEBAS.md`.
+El plan de pruebas manuales de los doce módulos está en `tests/PLAN_DE_PRUEBAS.md`.
 
 ## Reportes y patrones de diseño
 
@@ -69,3 +69,45 @@ Los informes PDF previstos son: préstamos activos y vencidos por sede, libros m
 - `clases/estrategia_plazo.py`: patrón **Strategy**, plazos de 7, 14 y 21 días.
 
 Estas clases deben mantenerse porque forman parte del diseño que se defiende ante la cátedra.
+
+## Entrega y demostración
+
+La consigna de Biblioteca exige ocho procesos, sus validaciones, al menos
+dos patrones de diseño y cuatro reportes no triviales. El documento del
+Grupo 73 también incluye inventario por código e historial de lecturas.
+
+Para verificar el proyecto desde una copia nueva:
+
+```powershell
+py -m pip install -r requirements.txt
+py -m unittest discover -s tests -v
+py main.py
+```
+
+**Atención:** la base `biblioteca.db` local está excluida de GitHub.
+Al ejecutar una copia nueva, `main.py` crea las tablas vacías. Para una
+demostración completa se deben preparar en esa copia datos de ejemplo
+(sedes activas, socios habilitados, libros y ejemplares), o usar una
+base de demostración independiente, sin datos personales reales.
+
+**Documento de referencia:** `BiblioRed final final.pdf` contiene el
+alcance y el UML presentado. No forma parte de los archivos de código de
+este repositorio; entregarlo por separado según indique la cátedra.
+Antes de la entrega final, actualizar el diagrama para que represente
+`Remito` y `RemitoRetorno` como contextos separados que reutilizan
+`EstadoRemito`. En SQLite hay historiales diferenciados de ida y retorno.
+
+### Qué mostrar en la defensa
+
+1. Sedes, socios y catálogo; localizar un registro escribiendo DNI,
+   título, ISBN o código, sin recorrer listas.
+2. Solicitud interbibliotecaria; empaquetar, despachar y recibir el remito.
+3. Entregar un préstamo y elegir la estrategia de 7, 14 o 21 días.
+4. Registrar devolución en estado Bueno y completar el retorno a origen.
+5. Consultar disponibilidad, reservas, inventario, historial y los
+   cuatro reportes PDF.
+
+No es necesario borrar las pruebas automatizadas: permiten verificar
+reglas sin tocar la base de demostración. No se deben subir
+`biblioteca.db`, `__pycache__/`, `.venv/` ni los PDF generados por la
+aplicación.
