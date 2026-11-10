@@ -1,5 +1,10 @@
 
 import sqlite3
+from datetime import date
+from clases.prestamo import Prestamo
+from clases.remito import Remito
+from clases.tipos import TipoRemito
+from datos.remito_modelo import cargar_remito
 from datos.base_datos import RUTA_BASE_DATOS
 
 
@@ -120,7 +125,8 @@ def registrar_devolucion(devolucion):
         cursor.execute("""
             SELECT p.id_ejemplar, p.estado, sp.tipo,
                    sp.id_sede_origen, sp.id_sede_destino,
-                   e.estado, e.id_sede, e.id_sede_actual
+                    e.estado, e.id_sede, e.id_sede_actual,
+                    p.id_solicitud, p.fecha_prestamo, p.fecha_vencimiento
             FROM prestamos p
             JOIN solicitudes_prestamo sp
                 ON sp.id_solicitud = p.id_solicitud
@@ -134,7 +140,8 @@ def registrar_devolucion(devolucion):
             raise ValueError("El préstamo no existe")
 
         (id_ejemplar, estado_p, tipo, id_origen, id_destino,
-         estado_e, sede_propietaria, sede_actual) = datos
+         estado_e, sede_propietaria, sede_actual,
+         id_solicitud, fecha_entrega, fecha_vencimiento) = datos
 
         if estado_p != "Activo" or estado_e != "Prestado":
             raise ValueError(
@@ -145,6 +152,16 @@ def registrar_devolucion(devolucion):
             raise ValueError(
                 "La ubicación del ejemplar no coincide con el préstamo"
             )
+
+        prestamo = Prestamo(
+            id_solicitud, id_prestamo=devolucion.id_prestamo,
+            fecha_entrega=date.fromisoformat(fecha_entrega),
+            fecha_vencimiento=date.fromisoformat(fecha_vencimiento),
+            estado=estado_p,
+        )
+        devolucion = prestamo.registrar_devolucion(
+            devolucion.estado_fisico, devolucion.observaciones
+        )
 
         if tipo == "Local" and id_origen == id_destino:
             estado_nuevo = (
@@ -167,7 +184,7 @@ def registrar_devolucion(devolucion):
             devolucion.id_prestamo,
             id_ejemplar,
             id_destino,
-            devolucion.fecha,
+            devolucion.fecha.isoformat(),
             devolucion.estado_fisico,
             devolucion.observaciones
         ))
@@ -179,7 +196,7 @@ def registrar_devolucion(devolucion):
             SET estado = 'Devuelto', fecha_devolucion = ?
             WHERE id_prestamo = ? AND estado = 'Activo'
         """, (
-            devolucion.fecha,
+            devolucion.fecha.isoformat(),
             devolucion.id_prestamo
         ))
 
@@ -248,7 +265,8 @@ def consultar_remitos_retorno():
     cursor.execute("""
         SELECT r.id_remito, r.id_devolucion, e.codigo,
                l.titulo, origen.nombre, destino.nombre,
-               r.estado, d.estado_fisico
+                r.estado, d.estado_fisico,
+                r.id_ejemplar, r.id_sede_origen, r.id_sede_destino
         FROM remitos_retorno r
         JOIN devoluciones d ON r.id_devolucion = d.id_devolucion
         JOIN ejemplares e ON r.id_ejemplar = e.id_ejemplar
@@ -324,6 +342,11 @@ def preparar_retorno(id_devolucion):
                 "No se pueden iniciar envíos con sedes dadas de baja"
             )
 
+        remito = Remito(
+            None, id_ejemplar, id_origen, id_destino,
+            tipo=TipoRemito.RETORNO, id_devolucion=id_devolucion,
+        )
+
         cursor.execute("""
             UPDATE ejemplares
             SET estado = 'Retorno empaquetado'
@@ -348,9 +371,11 @@ def preparar_retorno(id_devolucion):
         id_remito = cursor.lastrowid
 
         cursor.execute("""
-            INSERT INTO historial_retornos (id_remito, estado, observacion)
-            VALUES (?, 'Empaquetado', 'Devolución preparada para retorno')
-        """, (id_remito,))
+            INSERT INTO historial_retornos (id_remito, estado, fecha, observacion)
+            VALUES (?, ?, ?, ?)
+        """, (id_remito, remito.estado,
+              remito.historial_movimientos[-1].fecha_hora.isoformat(sep=" "),
+              "Devolución preparada para retorno"))
 
         conexion.commit()
         return id_remito
@@ -377,7 +402,7 @@ def avanzar_retorno(id_remito, nuevo_estado):
         cursor.execute("""
             SELECT r.id_ejemplar, r.id_sede_origen, r.id_sede_destino,
                    r.estado, e.estado, e.id_sede_actual, e.id_sede,
-                   d.estado_fisico, origen.activa, destino.activa
+                    d.estado_fisico, origen.activa, destino.activa
             FROM remitos_retorno r
             JOIN ejemplares e ON r.id_ejemplar = e.id_ejemplar
             JOIN devoluciones d ON r.id_devolucion = d.id_devolucion
@@ -393,7 +418,15 @@ def avanzar_retorno(id_remito, nuevo_estado):
 
         (id_ejemplar, id_origen, id_destino, estado_r,
          estado_e, sede_actual, propietaria, fisico,
-         origen_activa, destino_activa) = datos
+          origen_activa, destino_activa) = datos
+
+        remito = cargar_remito(cursor, id_remito, TipoRemito.RETORNO)
+        observacion = ("Retorno despachado" if nuevo_estado == "En tránsito"
+                       else "Ejemplar retornado a la sede propietaria")
+        if nuevo_estado == "En tránsito":
+            remito.despachar(observacion=observacion)
+        else:
+            remito.recibir(observacion=observacion)
 
         if propietaria != id_destino:
             raise ValueError(
@@ -461,11 +494,11 @@ def avanzar_retorno(id_remito, nuevo_estado):
             raise ValueError("No se pudo actualizar el ejemplar")
 
         cursor.execute("""
-            INSERT INTO historial_retornos (id_remito, estado, observacion)
-            VALUES (?, ?, ?)
-        """, (id_remito, nuevo_estado,
-             "Retorno despachado" if nuevo_estado == "En tránsito"
-             else "Ejemplar retornado a la sede propietaria"))
+            INSERT INTO historial_retornos (id_remito, estado, fecha, observacion)
+            VALUES (?, ?, ?, ?)
+        """, (id_remito, remito.estado,
+              remito.historial_movimientos[-1].fecha_hora.isoformat(sep=" "),
+              remito.historial_movimientos[-1].observacion))
 
         conexion.commit()
         return nuevo_estado_e

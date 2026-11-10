@@ -1,8 +1,12 @@
 
+from clases.tipos import EstadoEjemplar
+
+
 class Ejemplar:
 
     def __init__(self, id_ejemplar, codigo: str,
-                 id_libro: int, id_sede: int) -> None:
+                 id_libro: int, id_sede: int, *, id_sede_actual=None,
+                 estado=EstadoEjemplar.DISPONIBLE) -> None:
 
         if codigo.strip() == "":
             raise ValueError("El código del ejemplar es obligatorio")
@@ -13,11 +17,23 @@ class Ejemplar:
         if id_sede <= 0:
             raise ValueError("Debe seleccionar una sede válida")
 
+        if id_sede_actual is not None and id_sede_actual <= 0:
+            raise ValueError("Debe seleccionar una ubicación actual válida")
+
         self._id_ejemplar = id_ejemplar
         self._codigo = codigo.strip()
         self._id_libro = id_libro
         self._id_sede = id_sede
-        self._estado = "Disponible"
+        self._id_sede_actual = id_sede_actual if id_sede_actual is not None else id_sede
+        self._estado = EstadoEjemplar(estado)
+
+    @property
+    def id_sede_propietaria(self):
+        return self._id_sede
+
+    @property
+    def id_sede_actual(self):
+        return self._id_sede_actual
 
     @property
     def id_ejemplar(self):

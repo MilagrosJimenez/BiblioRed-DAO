@@ -2,6 +2,7 @@
 import sqlite3
 
 from datos.base_datos import RUTA_BASE_DATOS
+from clases.reserva import Reserva
 
 
 def crear_tabla_reservas():
@@ -174,13 +175,14 @@ def guardar_reserva(reserva):
 
         cursor.execute("""
             INSERT INTO reservas
-            (id_socio, id_libro, id_sede, estado)
-            VALUES (?, ?, ?, ?)
+            (id_socio, id_libro, id_sede, estado, fecha_reserva)
+            VALUES (?, ?, ?, ?, ?)
         """, (
             reserva.id_socio,
             reserva.id_libro,
             reserva.id_sede,
-            reserva.estado
+            reserva.estado,
+            reserva.fecha.isoformat()
         ))
 
         nueva_id = cursor.lastrowid
@@ -204,11 +206,21 @@ def cancelar_reserva(id_reserva):
         cursor.execute("BEGIN IMMEDIATE")
 
         cursor.execute("""
+            SELECT id_socio, id_libro, id_sede, estado
+            FROM reservas WHERE id_reserva = ?
+        """, (id_reserva,))
+        datos = cursor.fetchone()
+        if datos is None:
+            raise ValueError("La reserva no existe o ya no está pendiente")
+        reserva = Reserva(*datos[:3], id_reserva=id_reserva, estado=datos[3])
+        reserva.cancelar()
+
+        cursor.execute("""
             UPDATE reservas
-            SET estado = 'Cancelada'
+            SET estado = ?
             WHERE id_reserva = ?
               AND estado = 'Pendiente'
-        """, (id_reserva,))
+        """, (reserva.estado, id_reserva))
 
         if cursor.rowcount != 1:
             raise ValueError(
@@ -252,10 +264,9 @@ def atender_reserva(id_reserva):
 
         id_socio, id_libro, id_sede, estado, habilitado, activa = datos
 
-        if estado != "Pendiente":
-            raise ValueError(
-                "Solo se pueden atender reservas pendientes"
-            )
+        reserva = Reserva(id_socio, id_libro, id_sede,
+                          id_reserva=id_reserva, estado=estado)
+        reserva.atender()
 
         if habilitado != 1 or activa != 1:
             raise ValueError(
@@ -343,11 +354,11 @@ def atender_reserva(id_reserva):
 
         cursor.execute("""
             UPDATE reservas
-            SET estado = 'Atendida',
+            SET estado = ?,
                 id_solicitud = ?
             WHERE id_reserva = ?
               AND estado = 'Pendiente'
-        """, (id_solicitud, id_reserva))
+        """, (reserva.estado, id_solicitud, id_reserva))
 
         if cursor.rowcount != 1:
             raise ValueError(

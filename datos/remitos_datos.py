@@ -2,6 +2,9 @@
 import sqlite3
 
 from datos.base_datos import RUTA_BASE_DATOS
+from clases.remito import Remito
+from clases.tipos import TipoRemito
+from datos.remito_modelo import cargar_remito
 
 
 def crear_tablas_remitos():
@@ -276,6 +279,8 @@ def empaquetar_solicitud(id_solicitud):
         if activa_o != 1 or activa_d != 1:
             raise ValueError("Ambas sedes deben estar activas")
 
+        remito = Remito(id_solicitud, ejemplar, origen, destino)
+
         cursor.execute("""
             UPDATE solicitudes_prestamo
             SET estado = 'Empaquetada'
@@ -317,9 +322,10 @@ def empaquetar_solicitud(id_solicitud):
 
         cursor.execute("""
             INSERT INTO historial_remitos
-            (id_remito, estado, observacion)
-            VALUES (?, 'Empaquetado', 'Ejemplar preparado para despacho')
-        """, (id_remito,))
+            (id_remito, estado, fecha, observacion)
+            VALUES (?, ?, ?, 'Ejemplar preparado para despacho')
+        """, (id_remito, remito.estado,
+              remito.historial_movimientos[-1].fecha_hora.isoformat(sep=" ")))
 
         conexion.commit()
 
@@ -374,7 +380,7 @@ def avanzar_remito(id_remito, nuevo_estado):
                    sp.estado,
                    e.estado,
                    destino.activa,
-                   origen.activa
+                    origen.activa
 
             FROM remitos r
 
@@ -408,6 +414,14 @@ def avanzar_remito(id_remito, nuevo_estado):
             destino_activa,
             origen_activa
         ) = datos
+
+        remito = cargar_remito(cursor, id_remito, TipoRemito.IDA)
+        observacion = ("Ejemplar despachado" if nuevo_estado == "En tránsito"
+                       else "Ejemplar recibido en destino")
+        if nuevo_estado == "En tránsito":
+            remito.despachar(observacion=observacion)
+        else:
+            remito.recibir(observacion=observacion)
 
         if (
             actual_remito != estado_anterior
@@ -486,13 +500,13 @@ def avanzar_remito(id_remito, nuevo_estado):
 
         cursor.execute("""
             INSERT INTO historial_remitos
-            (id_remito, estado, observacion)
-            VALUES (?, ?, ?)
+            (id_remito, estado, fecha, observacion)
+            VALUES (?, ?, ?, ?)
         """, (
             id_remito,
-            nuevo_estado,
-            ("Ejemplar despachado" if nuevo_estado == "En tránsito"
-             else "Ejemplar recibido en destino")
+            remito.estado,
+            remito.historial_movimientos[-1].fecha_hora.isoformat(sep=" "),
+            remito.historial_movimientos[-1].observacion
         ))
 
         conexion.commit()

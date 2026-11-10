@@ -128,8 +128,8 @@ def guardar_ejemplar(ejemplar):
     """, (
         ejemplar.codigo,
         ejemplar.id_libro,
-        ejemplar.id_sede,
-        ejemplar.id_sede,
+        ejemplar.id_sede_propietaria,
+        ejemplar.id_sede_actual,
         ejemplar.estado
     ))
 

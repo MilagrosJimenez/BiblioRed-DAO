@@ -93,9 +93,14 @@ base de demostración independiente, sin datos personales reales.
 **Documento de referencia:** `BiblioRed final final.pdf` contiene el
 alcance y el UML presentado. No forma parte de los archivos de código de
 este repositorio; entregarlo por separado según indique la cátedra.
-Antes de la entrega final, actualizar el diagrama para que represente
-`Remito` y `RemitoRetorno` como contextos separados que reutilizan
-`EstadoRemito`. En SQLite hay historiales diferenciados de ida y retorno.
+El código sigue el diseño entregado: una única clase `Remito` distingue
+ida y retorno mediante `TipoRemito` y delega en `EstadoRemito`. Cada remito
+se vincula con una solicitud **o** una devolución, nunca ambas, y compone
+su colección de `HistorialRemito` con fecha, hora y observación.
+Las tablas SQLite de ida y retorno se conservan por compatibilidad con las
+bases existentes; `datos/remito_modelo.py` reconstruye ambas como `Remito`.
+La correspondencia con el UML y las decisiones de persistencia están en
+[`docs/CORRESPONDENCIA_UML.md`](docs/CORRESPONDENCIA_UML.md).
 
 ### Qué mostrar en la defensa
 

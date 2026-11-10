@@ -1,6 +1,7 @@
 
 from clases.devolucion import Devolucion
-from clases.remito_retorno import RemitoRetorno
+from clases.remito import Remito
+from clases.tipos import TipoRemito
 
 from datos.devoluciones_datos import (
     consultar_prestamos_activos,
@@ -39,13 +40,16 @@ class DevolucionesServicio:
         return consultar_historial_retorno(id_remito)
 
     def empaquetar(self, id_devolucion):
-        remito = RemitoRetorno(id_devolucion)
-        return preparar_retorno(remito.id_devolucion)
+        return preparar_retorno(id_devolucion)
 
     def avanzar(self, id_remito):
         for datos in consultar_remitos_retorno():
             if datos[0] == id_remito:
-                remito = RemitoRetorno(datos[1], datos[6])
+                remito = Remito(
+                    None, datos[8], datos[9], datos[10], datos[6],
+                    tipo=TipoRemito.RETORNO, id_devolucion=datos[1],
+                    id_remito=datos[0],
+                )
 
                 if remito.estado == "Empaquetado":
                     remito.despachar()
