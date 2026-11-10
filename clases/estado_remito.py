@@ -1,42 +1,39 @@
 """Patrón State. Reglas del ciclo de vida compartidas por ida y retorno."""
 from abc import ABC, abstractmethod
+from clases.tipos import CodigoEstadoRemito
 
 
 class EstadoRemito(ABC):
-    @property
     @abstractmethod
     def codigo(self):
         """Estado persistido en SQLite."""
 
-    def despachar(self, contexto):
+    def despachar(self, contexto, fecha_hora=None, observacion=""):
         raise ValueError("Solo se puede despachar un remito empaquetado")
 
-    def recibir(self, contexto):
+    def recibir(self, contexto, fecha_hora=None, observacion=""):
         raise ValueError("Solo se puede recibir un remito en tránsito")
 
 
 class EstadoEmpaquetado(EstadoRemito):
-    @property
     def codigo(self):
-        return "Empaquetado"
+        return CodigoEstadoRemito.EMPAQUETADO
 
-    def despachar(self, contexto):
-        contexto._cambiar_estado(EstadoEnTransito())
+    def despachar(self, contexto, fecha_hora=None, observacion=""):
+        contexto.cambiar_estado(EstadoEnTransito(), fecha_hora, observacion)
 
 
 class EstadoEnTransito(EstadoRemito):
-    @property
     def codigo(self):
-        return "En tránsito"
+        return CodigoEstadoRemito.EN_TRANSITO
 
-    def recibir(self, contexto):
-        contexto._cambiar_estado(EstadoRecibido())
+    def recibir(self, contexto, fecha_hora=None, observacion=""):
+        contexto.cambiar_estado(EstadoRecibido(), fecha_hora, observacion)
 
 
 class EstadoRecibido(EstadoRemito):
-    @property
     def codigo(self):
-        return "Recibido"
+        return CodigoEstadoRemito.RECIBIDO
 
 
 def construir_estado(codigo):

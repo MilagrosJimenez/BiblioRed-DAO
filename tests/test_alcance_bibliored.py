@@ -16,7 +16,7 @@ from clases.estrategia_plazo import (
 )
 from clases.prestamo import Prestamo
 from clases.remito import Remito
-from clases.remito_retorno import RemitoRetorno
+from clases.tipos import TipoRemito
 from datos import (
     base_datos, catalogo_datos, prestamos_datos, remitos_datos,
     prestamos_efectivos_datos, devoluciones_datos, reservas_datos,
@@ -36,7 +36,7 @@ class PruebaPatrones(unittest.TestCase):
 
     def test_state_ida_y_retorno(self):
         ida = Remito(1, 1, 1, 2)
-        retorno = RemitoRetorno(1)
+        retorno = Remito(None, 1, 2, 1, tipo=TipoRemito.RETORNO, id_devolucion=1)
         for remito in (ida, retorno):
             self.assertEqual(remito.estado, "Empaquetado")
             with self.assertRaises(ValueError):

@@ -27,6 +27,11 @@ class Sede:
         self._activa = True
 
     @property
+    def contacto(self) -> str:
+        """Contacto de la sede, almacenado como teléfono en SQLite."""
+        return self._telefono
+
+    @property
     def id_sede(self) -> int:
         return self._id_sede
 

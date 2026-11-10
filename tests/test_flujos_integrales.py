@@ -12,6 +12,12 @@ from unittest.mock import patch
 from clases.solicitud_prestamo import SolicitudPrestamo
 from clases.prestamo import Prestamo
 from clases.devolucion import Devolucion
+from clases.remito import Remito
+from clases.tipos import TipoRemito
+from datos.remito_modelo import cargar_remito
+from servicios.devoluciones_servicio import DevolucionesServicio
+from servicios.remitos_servicio import RemitosServicio
+from servicios.prestamos_efectivos_servicio import PrestamosEfectivosServicio
 
 from datos import (
     base_datos, catalogo_datos, prestamos_datos, remitos_datos,
@@ -83,6 +89,10 @@ class PruebasFlujosIntegrales(unittest.TestCase):
         prestamos_datos.guardar_solicitud(SolicitudPrestamo(1, 1, 1, 2))
         id_remito = remitos_datos.empaquetar_solicitud(1)
         self.assertEqual(self.estado_ejemplar(), ("Empaquetado", 1))
+        with self.assertRaises(ValueError):
+            remitos_datos.avanzar_remito(id_remito, "Recibido")
+        self.assertEqual(len(remitos_datos.consultar_historial_remito(id_remito)), 1)
+        self.assertEqual(self.estado_ejemplar(), ("Empaquetado", 1))
         remitos_datos.avanzar_remito(id_remito, "En tránsito")
         self.assertEqual(self.estado_ejemplar(), ("En tránsito", 1))
         remitos_datos.avanzar_remito(id_remito, "Recibido")
@@ -94,6 +104,10 @@ class PruebasFlujosIntegrales(unittest.TestCase):
         )
         self.assertEqual(self.estado_ejemplar(), ("Pendiente de retorno", 2))
         id_retorno = devoluciones_datos.preparar_retorno(id_devolucion)
+        self.assertEqual(self.estado_ejemplar(), ("Retorno empaquetado", 2))
+        with self.assertRaises(ValueError):
+            devoluciones_datos.avanzar_retorno(id_retorno, "Recibido")
+        self.assertEqual(len(devoluciones_datos.consultar_historial_retorno(id_retorno)), 1)
         self.assertEqual(self.estado_ejemplar(), ("Retorno empaquetado", 2))
         devoluciones_datos.avanzar_retorno(id_retorno, "En tránsito")
         self.assertEqual(self.estado_ejemplar(), ("Retorno en tránsito", 2))
@@ -110,6 +124,35 @@ class PruebasFlujosIntegrales(unittest.TestCase):
         self.assertTrue(all(x[2] for x in regreso))
         movimientos = consultas_bibliored_datos.reporte_movimientos()
         self.assertEqual(sum(fila[2] for fila in movimientos), 2)
+
+        with closing(sqlite3.connect(self.ruta)) as db:
+            for identificador, tipo in ((id_remito, TipoRemito.IDA),
+                                        (id_retorno, TipoRemito.RETORNO)):
+                remito = cargar_remito(db.cursor(), identificador, tipo)
+                self.assertIs(type(remito), Remito)
+                self.assertEqual(remito.tipo, tipo)
+                self.assertEqual(remito.estado, "Recibido")
+                self.assertEqual(len(remito.historial_movimientos), 3)
+                self.assertTrue(all(m.id_movimiento for m in remito.historial_movimientos))
+                self.assertTrue(all(m.observacion for m in remito.historial_movimientos))
+
+    def test_servicios_usan_remito_unico_y_conservan_danado(self):
+        prestamos_datos.guardar_solicitud(SolicitudPrestamo(1, 1, 1, 2))
+        remitos = RemitosServicio()
+        devoluciones = DevolucionesServicio()
+        id_ida = remitos.empaquetar(1)
+        remitos.cambiar_estado(id_ida)
+        remitos.cambiar_estado(id_ida)
+        id_prestamo = PrestamosEfectivosServicio().registrar_entrega(1, 21)
+        id_devolucion = devoluciones.registrar(id_prestamo, "Dañado", "Tapa rota")
+        id_retorno = devoluciones.empaquetar(id_devolucion)
+        devoluciones.avanzar(id_retorno)
+        devoluciones.avanzar(id_retorno)
+        self.assertEqual(self.estado_ejemplar(), ("En revisión", 1))
+        antes = devoluciones.consultar_historial(id_retorno)
+        with self.assertRaises(ValueError):
+            devoluciones.avanzar(id_retorno)
+        self.assertEqual(devoluciones.consultar_historial(id_retorno), antes)
 
 
 if __name__ == "__main__":

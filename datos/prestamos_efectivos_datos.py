@@ -2,6 +2,7 @@
 import sqlite3
 
 from datos.base_datos import RUTA_BASE_DATOS
+from clases.solicitud_prestamo import SolicitudPrestamo
 
 
 def crear_tabla_prestamos():
@@ -292,6 +293,16 @@ def registrar_prestamo(prestamo):
                 "Ya existe un préstamo para esta solicitud o ejemplar"
             )
 
+        # La solicitud genera el préstamo y éste delega el vencimiento (UML).
+        solicitud = SolicitudPrestamo(
+            id_socio, id_ejemplar, id_origen, id_destino,
+            id_solicitud=prestamo.id_solicitud, estado=estado_solicitud,
+        )
+        prestamo = solicitud.confirmar_entrega(
+            estrategia_plazo=prestamo.estrategia_plazo,
+            fecha_entrega=prestamo.fecha_entrega,
+        )
+
         # Actualizar la solicitud
         cursor.execute("""
             UPDATE solicitudes_prestamo
@@ -340,7 +351,7 @@ def registrar_prestamo(prestamo):
             id_socio,
             id_ejemplar,
             prestamo.fecha_prestamo,
-            prestamo.fecha_vencimiento,
+            prestamo.fecha_vencimiento.isoformat(),
             prestamo.estado
         ))
 
