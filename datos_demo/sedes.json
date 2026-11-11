@@ -1,0 +1,5 @@
+[
+  {"id_sede": 901, "nombre": "Demo Centro", "direccion": "Calle de Ejemplo 100", "telefono": "0351-0000901", "horarios": "Lunes a viernes de 8 a 20", "activa": true},
+  {"id_sede": 902, "nombre": "Demo Norte", "direccion": "Pasaje Ficticio 200", "telefono": "0351-0000902", "horarios": "Lunes a viernes de 9 a 18", "activa": true},
+  {"id_sede": 903, "nombre": "Demo Sur", "direccion": "Avenida Demostración 300", "telefono": "0351-0000903", "horarios": "Lunes a sábados de 9 a 14", "activa": true}
+]

@@ -1,0 +1,12 @@
+[
+  {"isbn": "9780307474728", "titulo": "Cien años de soledad", "autor": "Gabriel García Márquez", "editorial": "Vintage Español"},
+  {"isbn": "9788420412146", "titulo": "Rayuela", "autor": "Julio Cortázar", "editorial": "Alfaguara"},
+  {"isbn": "9788491050293", "titulo": "Don Quijote de la Mancha", "autor": "Miguel de Cervantes", "editorial": "Penguin Clásicos"},
+  {"isbn": "9789875666481", "titulo": "El principito", "autor": "Antoine de Saint-Exupéry", "editorial": "Debolsillo"},
+  {"isbn": "9780451524935", "titulo": "1984", "autor": "George Orwell", "editorial": "Signet Classics"},
+  {"isbn": "9780132350884", "titulo": "Clean Code", "autor": "Robert C. Martin", "editorial": "Prentice Hall"},
+  {"isbn": "9780201633610", "titulo": "Design Patterns", "autor": "Erich Gamma, Richard Helm, Ralph Johnson y John Vlissides", "editorial": "Addison-Wesley"},
+  {"isbn": "9780135957059", "titulo": "The Pragmatic Programmer", "autor": "David Thomas y Andrew Hunt", "editorial": "Addison-Wesley"},
+  {"isbn": "9781492056355", "titulo": "Fluent Python", "autor": "Luciano Ramalho", "editorial": "O'Reilly Media"},
+  {"isbn": "9780134685991", "titulo": "Effective Java", "autor": "Joshua Bloch", "editorial": "Addison-Wesley"}
+]

@@ -16,8 +16,8 @@ RUTA_BASE_DATOS = os.path.abspath(
 # SEDES
 # =================================
 
-def crear_tabla_sedes():
-    conexion = sqlite3.connect(RUTA_BASE_DATOS)
+def crear_tabla_sedes(ruta=None):
+    conexion = sqlite3.connect(ruta or RUTA_BASE_DATOS)
     cursor = conexion.cursor()
 
     cursor.execute("""
@@ -124,8 +124,8 @@ def actualizar_datos_sede(sede):
 # SOCIOS
 # =================================
 
-def crear_tabla_socios():
-    conexion = sqlite3.connect(RUTA_BASE_DATOS)
+def crear_tabla_socios(ruta=None):
+    conexion = sqlite3.connect(ruta or RUTA_BASE_DATOS)
     cursor = conexion.cursor()
 
     cursor.execute("""

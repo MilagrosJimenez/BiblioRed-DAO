@@ -1,0 +1,10 @@
+[
+  {"documento": "99000001", "nombre": "Ana", "apellido": "Ejemplo", "telefono": "0351-0000001", "correo": "ana@example.invalid", "habilitado": true},
+  {"documento": "99000002", "nombre": "Bruno", "apellido": "Prueba", "telefono": "0351-0000002", "correo": "bruno@example.invalid", "habilitado": true},
+  {"documento": "99000003", "nombre": "Carla", "apellido": "Muestra", "telefono": "0351-0000003", "correo": "carla@example.invalid", "habilitado": true},
+  {"documento": "99000004", "nombre": "Diego", "apellido": "Modelo", "telefono": "0351-0000004", "correo": "diego@example.invalid", "habilitado": true},
+  {"documento": "99000005", "nombre": "Elena", "apellido": "Ensayo", "telefono": "0351-0000005", "correo": "elena@example.invalid", "habilitado": true},
+  {"documento": "99000006", "nombre": "Felipe", "apellido": "Demo", "telefono": "0351-0000006", "correo": "felipe@example.invalid", "habilitado": true},
+  {"documento": "99000007", "nombre": "Gabriela", "apellido": "Ficticia", "telefono": "0351-0000007", "correo": "gabriela@example.invalid", "habilitado": true},
+  {"documento": "99000008", "nombre": "Hugo", "apellido": "Inhabilitado", "telefono": "0351-0000008", "correo": "hugo@example.invalid", "habilitado": false}
+]

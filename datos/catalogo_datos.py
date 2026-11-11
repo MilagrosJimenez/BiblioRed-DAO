@@ -4,8 +4,8 @@ import sqlite3
 from datos.base_datos import RUTA_BASE_DATOS
 
 
-def crear_tablas_catalogo():
-    conexion = sqlite3.connect(RUTA_BASE_DATOS)
+def crear_tablas_catalogo(ruta=None):
+    conexion = sqlite3.connect(ruta or RUTA_BASE_DATOS)
     conexion.execute("PRAGMA foreign_keys = ON")
     cursor = conexion.cursor()
 
