@@ -5,8 +5,8 @@ from datos.base_datos import RUTA_BASE_DATOS
 from clases.solicitud_prestamo import SolicitudPrestamo
 
 
-def crear_tabla_prestamos():
-    conexion = sqlite3.connect(RUTA_BASE_DATOS)
+def crear_tabla_prestamos(ruta=None):
+    conexion = sqlite3.connect(ruta or RUTA_BASE_DATOS)
     conexion.execute("PRAGMA foreign_keys = ON")
     cursor = conexion.cursor()
 

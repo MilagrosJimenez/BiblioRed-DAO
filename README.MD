@@ -24,6 +24,8 @@ py main.py
 | `main.py` | Inicia BiblioRed y prepara la base de datos. |
 | `clases/` | Objetos del negocio: Sede, Socio, Libro, Ejemplar, Solicitud, Préstamo, Remito, Reserva y Devolución. También contiene las clases de los patrones State y Strategy. |
 | `datos/` | Consultas y modificaciones de SQLite: guardar, consultar, actualizar y verificar estados. |
+| `datos_demo/` | JSON versionados con datos ficticios para la demostración. |
+| `scripts/` | Importación de datos de demostración. |
 | `servicios/` | Coordina las reglas y los procesos del negocio; también genera los cuatro reportes PDF. |
 | `interfaces/` | Pantallas Flet, navegación, formularios, listados y búsquedas. |
 | `imagenes/` | Logo de UTN FRC. |
@@ -84,11 +86,47 @@ py -m unittest discover -s tests -v
 py main.py
 ```
 
-**Atención:** la base `biblioteca.db` local está excluida de GitHub.
-Al ejecutar una copia nueva, `main.py` crea las tablas vacías. Para una
-demostración completa se deben preparar en esa copia datos de ejemplo
-(sedes activas, socios habilitados, libros y ejemplares), o usar una
-base de demostración independiente, sin datos personales reales.
+### Cargar datos para la demo
+
+Desde la raíz del proyecto, con la aplicación cerrada:
+
+```powershell
+python -m scripts.importar_demo
+python main.py
+```
+
+El importador crea las tablas si faltan y carga `biblioteca.db` con
+**3 sedes, 8 socios, 10 libros y 24 ejemplares** desde los cuatro JSON
+de `datos_demo/`. Las personas y los contactos son ficticios; un socio
+está inhabilitado para mostrar las validaciones.
+
+Se puede ejecutar varias veces: no duplica ni actualiza los registros existentes,
+ni reinicia estados modificados durante la demo. Reutiliza socios por documento,
+libros por ISBN y ejemplares por código. Las sedes usan los IDs 901–903;
+si un ID ya tiene otro nombre, o un código pertenece a otro libro/sede,
+la carga se cancela sin insertar parcialmente los datos. No borra nada.
+La creación/actualización de tablas se realiza antes de la transacción de datos.
+
+Para probar sin tocar la base de la aplicación:
+
+```powershell
+python -m scripts.importar_demo --bd biblioteca_demo.db
+```
+
+`main.py` sigue usando `biblioteca.db`; `--bd` solo cambia el destino del
+importador. Para otra carpeta con el mismo formato: `--datos ruta/a/json`.
+En `ejemplares.json`, `isbn` e `id_sede` deben existir en los otros JSON;
+los IDs internos de libros y socios los resuelve SQLite.
+
+**Recorrido sugerido:** buscar a Ana Ejemplo (DNI `99000001`), solicitar
+`DEMO-001-C` desde Demo Centro hacia Demo Norte, completar el remito de ida,
+entregar el préstamo, registrar la devolución y completar el retorno.
+Los ejemplares empiezan disponibles en su sede propietaria: no se precargan
+préstamos, reservas ni remitos; se generan durante la demostración para
+mostrar los procesos y alimentar los reportes e historiales.
+
+**Atención:** las bases `.db` locales están excluidas de GitHub; los JSON sí
+se comparten en el repositorio.
 
 **Documento de referencia:** `BiblioRed final final.pdf` contiene el
 alcance y el UML presentado. No forma parte de los archivos de código de

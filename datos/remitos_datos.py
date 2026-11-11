@@ -7,8 +7,8 @@ from clases.tipos import TipoRemito
 from datos.remito_modelo import cargar_remito
 
 
-def crear_tablas_remitos():
-    conexion = sqlite3.connect(RUTA_BASE_DATOS)
+def crear_tablas_remitos(ruta=None):
+    conexion = sqlite3.connect(ruta or RUTA_BASE_DATOS)
     conexion.execute("PRAGMA foreign_keys = ON")
     cursor = conexion.cursor()
 

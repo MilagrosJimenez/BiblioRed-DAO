@@ -8,8 +8,8 @@ from datos.remito_modelo import cargar_remito
 from datos.base_datos import RUTA_BASE_DATOS
 
 
-def crear_tablas_devoluciones():
-    conexion = sqlite3.connect(RUTA_BASE_DATOS)
+def crear_tablas_devoluciones(ruta=None):
+    conexion = sqlite3.connect(ruta or RUTA_BASE_DATOS)
     conexion.execute("PRAGMA foreign_keys = ON")
     cursor = conexion.cursor()
 
