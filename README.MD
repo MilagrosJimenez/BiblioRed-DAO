@@ -1,156 +1,84 @@
 # BiblioRed — Sistema de préstamos interbibliotecarios
 
-Trabajo práctico integrador de **Desarrollo de Aplicaciones con Objetos** (DAO), UTN FRC, Grupo 73 — 2026.
+**Trabajo práctico integrador de Desarrollo de Aplicaciones con Objetos (DAO)** · UTN FRC · Grupo 73 · 2026.
 
-El alcance está definido por el **documento de referencia de desarrollo entregado a la cátedra**. El programa incluye los ocho procesos obligatorios, inventario por códigos e historial de lecturas; cuatro reportes PDF y los patrones **State** (remitos) y **Strategy** (plazos). No se calculan multas.
+Permite administrar sedes, socios, libros y ejemplares físicos; solicitar préstamos locales e interbibliotecarios; registrar remitos, devoluciones y reservas; consultar inventarios e historiales; y generar cuatro informes PDF. **No calcula multas**.
 
-## Cómo ejecutar
+## Ejecutar el TP original
 
-Se utiliza **Python 3.14**, **Flet 1.0.5**, **SQLite** y **ReportLab**.
+Requisitos: **Python 3.14**, **Flet 1.0.5**, **SQLite** (incluido en Python) y **ReportLab**.
 
-En la terminal de VS Code, desde la carpeta del proyecto:
+Desde la terminal de VS Code, situada en la carpeta del proyecto:
 
 ```powershell
 py -m pip install -r requirements.txt
 py main.py
 ```
 
-**Punto de entrada:** `main.py`. Inicializa las tablas y abre la interfaz Flet. No hay que ejecutar cada archivo Python por separado.
+El punto de entrada es **`main.py`**. Crea las tablas que falten en SQLite y abre la aplicación Flet. No es necesario ejecutar cada módulo por separado.
 
-## Estructura del proyecto
+## Organización del código
 
-| Ruta | Para qué sirve |
+| Carpeta o archivo | Responsabilidad |
 | --- | --- |
-| `main.py` | Inicia BiblioRed y prepara la base de datos. |
-| `clases/` | Objetos del negocio: Sede, Socio, Libro, Ejemplar, Solicitud, Préstamo, Remito, Reserva y Devolución. También contiene las clases de los patrones State y Strategy. |
-| `datos/` | Consultas y modificaciones de SQLite: guardar, consultar, actualizar y verificar estados. |
-| `datos_demo/` | JSON versionados con datos ficticios para la demostración. |
-| `scripts/` | Importación de datos de demostración. |
-| `servicios/` | Coordina las reglas y los procesos del negocio; también genera los cuatro reportes PDF. |
-| `interfaces/` | Pantallas Flet, navegación, formularios, listados y búsquedas. |
-| `imagenes/` | Logo de UTN FRC. |
-| `tests/` | Pruebas automatizadas y `PLAN_DE_PRUEBAS.md` para verificaciones manuales. |
-| `.github/workflows/` | Ejecuta las pruebas en GitHub automáticamente. |
+| `main.py` | Inicializa las tablas y abre la interfaz. |
+| `clases/` | Objetos del dominio, reglas y patrones de diseño. |
+| `servicios/` | Coordina procesos y validaciones; genera los informes PDF. |
+| `datos/` | Persistencia: consultas, altas y modificaciones en SQLite. |
+| `interfaces/` | Pantallas Flet, menú, formularios, listados y búsquedas. |
+| `tests/` | Pruebas automatizadas y plan de verificación manual. |
+| `docs/CORRESPONDENCIA_UML.md` | Relación entre el UML entregado y el código. |
+| `imagenes/` | Recursos gráficos de la interfaz. |
+| `scripts/` y `datos_demo/` | Utilidades opcionales de carga inicial; **no se ejecutan con `main.py`**. |
 
-### Archivos especiales dentro de `interfaces/`
+`interfaces/ventana_completa.py` administra la navegación; `interfaces/ventana_flet.py` es una clase **utilizada** como base de la interfaz y para sedes (su nombre es histórico). `ui_moderno.py` y `diseno_pantallas.py` contienen estilos y diseño compartido.
 
-- `ventana_completa.py`: ventana principal, menú lateral e Inicio; conecta todas las pantallas.
-- `ventana_flet.py`: base de la interfaz Flet y administración de sedes. Su nombre es histórico, pero **sí está en uso**.
-- `ventana_socios.py`, `ventana_catalogo.py`, `ventana_solicitudes.py`, etc.: cada una presenta las operaciones del módulo correspondiente.
-- `ui_moderno.py`: estilos y filtros de búsqueda compartidos.
-- `diseno_pantallas.py`: distribución y tamaños comunes de formularios/listados.
-- `busqueda_general.py`: busca **secciones del menú lateral** desde Inicio, no personas ni ejemplares.
+Las carpetas `clases`, `servicios`, `datos` e `interfaces` **no son programas independientes**, sino partes de BiblioRed.
 
-Los nombres `clases`, `datos`, `servicios` e `interfaces` representan responsabilidades distintas. No son cuatro programas: son partes de la misma aplicación.
+## Base de datos
 
-## Base de datos y archivos generados
+La aplicación usa **`biblioteca.db`** en la raíz del proyecto. Contiene **12 tablas**: `sedes`, `socios`, `libros`, `ejemplares`, `solicitudes_prestamo`, `remitos`, `historial_remitos`, `prestamos`, `devoluciones`, `remitos_retorno`, `historial_retornos` y `reservas`.
 
-- `biblioteca.db` guarda los datos reales de tu computadora; **no se sube a GitHub**.
-- `reportes_generados/` aparece cuando se producen informes PDF; no hace falta subirlo.
-- `__pycache__/` y archivos `.pyc` los crea Python automáticamente.
-- `.venv/` o `venv/` son entornos de Python, si se utilizan.
-- `.git/` es la carpeta de control de versiones. **No hay que borrarla.**
+El archivo `biblioteca.db` **no se sube a GitHub** y nunca se debe borrar para limpiar código: hacerlo podría perder los préstamos, remitos y socios cargados en esa computadora. Para respaldarlo, cerrá la aplicación y copiá el archivo a otra ubicación.
 
-Estos archivos y carpetas locales generados automáticamente no son parte del código fuente.
+La interfaz llama a servicios; los servicios usan funciones de `datos/` que ejecutan SQL con `sqlite3`. Las clases del dominio no abren conexiones por sí mismas.
 
-## Cómo ejecutar las pruebas
+## Patrones de diseño
+
+- **State**, `clases/estado_remito.py` y `clases/remito.py`: estados `EstadoEmpaquetado`, `EstadoEnTransito` y `EstadoRecibido`. El remito delega en el estado actual y registra el historial. Se reutiliza para ida y retorno.
+- **Strategy**, `clases/estrategia_plazo.py` y `clases/prestamo.py`: vencimiento de préstamos con estrategias intercambiables de 7, 14 o 21 días.
+
+El documento UML entregado por el grupo se relaciona con la implementación mediante `docs/CORRESPONDENCIA_UML.md`. El UML **no reemplaza al diagrama entidad-relación (DER)** de SQLite.
+
+## Reportes PDF
+
+Desde **Consultas y análisis → Reportes**, se generan los cuatro informes:
+
+1. Préstamos activos y vencidos por sede.
+2. Libros más solicitados para préstamos interbibliotecarios.
+3. Disponibilidad de títulos y ejemplares por sede.
+4. Movimientos entre sedes y tiempo promedio de tránsito.
+
+La generación está en `servicios/reportes_pdf.py` y las consultas SQL en `datos/consultas_bibliored_datos.py`. Los archivos se guardan en **`reportes_generados/`**.
+
+Los gráficos se muestran solo cuando existen valores positivos. Si el informe contiene ceros, presenta indicadores y tabla sin inventar préstamos. La carpeta `reportes_generados/` puede regenerarse, pero conviene conservar los PDF que vayas a presentar.
+
+## ISBN y ejemplares
+
+Los nuevos libros validan **ISBN-13** con dígito de control; se pueden escribir con espacios o guiones y se normalizan. El ISBN identifica una edición de la publicación; el **código del ejemplar** identifica una copia física concreta. No se alteran automáticamente ISBN antiguos que ya estuvieran en la base.
+
+## Pruebas
 
 ```powershell
 py -m unittest discover -s tests -v
 ```
 
-Las pruebas automatizadas verifican reglas de negocio, integridad de SQLite, patrones de diseño y construcción de pantallas. También se deben probar las operaciones en Windows, porque las pruebas no garantizan por sí solas que todo se dibuje correctamente.
+Las pruebas usan bases temporales; no modifican `biblioteca.db`. El plan de pruebas visuales está en `tests/PLAN_DE_PRUEBAS.md`. También hay un workflow en `.github/workflows/`.
 
-El plan de pruebas manuales de los doce módulos está en `tests/PLAN_DE_PRUEBAS.md`.
+## Archivos que se deben conservar y archivos generados
 
-## Reportes y patrones de diseño
+**Conservar:** `main.py`, `requirements.txt`, `clases/`, `servicios/`, `datos/`, `interfaces/`, `tests/`, `docs/CORRESPONDENCIA_UML.md`, `imagenes/`, `.github/`, `.git/` y, en tu computadora, **`biblioteca.db` y sus respaldos**.
 
-Los informes PDF previstos son: préstamos activos y vencidos por sede, libros más solicitados interbibliotecariamente, disponibilidad por sede y movimientos entre sedes con tiempo promedio de tránsito.
+**Generados automáticamente:** `__pycache__/`, `*.pyc`, carpetas de entornos virtuales y `reportes_generados/`. Son archivos locales ignorados por Git; no hay necesidad de incluirlos en una entrega de código fuente. No elimines los informes que debas mostrar.
 
-- `clases/estado_remito.py`: patrón **State**, cambios de estado de remitos.
-- `clases/estrategia_plazo.py`: patrón **Strategy**, plazos de 7, 14 y 21 días.
-
-Estas clases deben mantenerse porque forman parte del diseño que se defiende ante la cátedra.
-
-## Entrega y demostración
-
-La consigna de Biblioteca exige ocho procesos, sus validaciones, al menos
-dos patrones de diseño y cuatro reportes no triviales. El documento del
-Grupo 73 también incluye inventario por código e historial de lecturas.
-
-Para verificar el proyecto desde una copia nueva:
-
-```powershell
-py -m pip install -r requirements.txt
-py -m unittest discover -s tests -v
-py main.py
-```
-
-### Cargar datos para la demo
-
-Desde la raíz del proyecto, con la aplicación cerrada:
-
-```powershell
-python -m scripts.importar_demo
-python main.py
-```
-
-El importador crea las tablas si faltan y carga `biblioteca.db` con
-**3 sedes, 8 socios, 10 libros y 24 ejemplares** desde los cuatro JSON
-de `datos_demo/`. Las personas y los contactos son ficticios; un socio
-está inhabilitado para mostrar las validaciones.
-
-Se puede ejecutar varias veces: no duplica ni actualiza los registros existentes,
-ni reinicia estados modificados durante la demo. Reutiliza socios por documento,
-libros por ISBN y ejemplares por código. Las sedes usan los IDs 901–903;
-si un ID ya tiene otro nombre, o un código pertenece a otro libro/sede,
-la carga se cancela sin insertar parcialmente los datos. No borra nada.
-La creación/actualización de tablas se realiza antes de la transacción de datos.
-
-Para probar sin tocar la base de la aplicación:
-
-```powershell
-python -m scripts.importar_demo --bd biblioteca_demo.db
-```
-
-`main.py` sigue usando `biblioteca.db`; `--bd` solo cambia el destino del
-importador. Para otra carpeta con el mismo formato: `--datos ruta/a/json`.
-En `ejemplares.json`, `isbn` e `id_sede` deben existir en los otros JSON;
-los IDs internos de libros y socios los resuelve SQLite.
-
-**Recorrido sugerido:** buscar a Ana Ejemplo (DNI `99000001`), solicitar
-`DEMO-001-C` desde Demo Centro hacia Demo Norte, completar el remito de ida,
-entregar el préstamo, registrar la devolución y completar el retorno.
-Los ejemplares empiezan disponibles en su sede propietaria: no se precargan
-préstamos, reservas ni remitos; se generan durante la demostración para
-mostrar los procesos y alimentar los reportes e historiales.
-
-**Atención:** las bases `.db` locales están excluidas de GitHub; los JSON sí
-se comparten en el repositorio.
-
-**Documento de referencia:** `BiblioRed final final.pdf` contiene el
-alcance y el UML presentado. No forma parte de los archivos de código de
-este repositorio; entregarlo por separado según indique la cátedra.
-El código sigue el diseño entregado: una única clase `Remito` distingue
-ida y retorno mediante `TipoRemito` y delega en `EstadoRemito`. Cada remito
-se vincula con una solicitud **o** una devolución, nunca ambas, y compone
-su colección de `HistorialRemito` con fecha, hora y observación.
-Las tablas SQLite de ida y retorno se conservan por compatibilidad con las
-bases existentes; `datos/remito_modelo.py` reconstruye ambas como `Remito`.
-La correspondencia con el UML y las decisiones de persistencia están en
-[`docs/CORRESPONDENCIA_UML.md`](docs/CORRESPONDENCIA_UML.md).
-
-### Qué mostrar en la defensa
-
-1. Sedes, socios y catálogo; localizar un registro escribiendo DNI,
-   título, ISBN o código, sin recorrer listas.
-2. Solicitud interbibliotecaria; empaquetar, despachar y recibir el remito.
-3. Entregar un préstamo y elegir la estrategia de 7, 14 o 21 días.
-4. Registrar devolución en estado Bueno y completar el retorno a origen.
-5. Consultar disponibilidad, reservas, inventario, historial y los
-   cuatro reportes PDF.
-
-No es necesario borrar las pruebas automatizadas: permiten verificar
-reglas sin tocar la base de demostración. No se deben subir
-`biblioteca.db`, `__pycache__/`, `.venv/` ni los PDF generados por la
-aplicación.
+**No eliminar por su nombre:** `interfaces/ventana_flet.py`, `datos/remito_modelo.py`, las tablas de retorno ni las clases de State/Strategy. Son parte de la implementación y del diseño defendido.
