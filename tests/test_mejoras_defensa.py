@@ -1,11 +1,7 @@
-"""Regresiones de las mejoras pedidas para la defensa."""
-import sqlite3
-import tempfile
+"""Regresiones de ISBN-13 y gráficos sin modificar la base local."""
 import unittest
-from pathlib import Path
 
 from clases.libro import Libro, normalizar_isbn
-from scripts.preparar_demo_reportes import preparar
 from servicios.reportes_pdf import crear_grafico
 
 
