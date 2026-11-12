@@ -5,11 +5,58 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
+from reportlab.graphics.shapes import Drawing, Rect, String, Line
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, LongTable, TableStyle
 )
 
 from servicios.consultas_bibliored_servicio import ConsultasBiblioredServicio
+
+
+
+def crear_grafico(clave, encabezados, filas):
+    """Gráfico horizontal con las primeras ocho filas del reporte."""
+    if not filas:
+        return None
+    series = {
+        "prestamos": (1, 2),
+        "solicitados": (2,),
+        "disponibilidad": (2, 3),
+        "movimientos": (2, 3),
+    }[clave]
+    colores = [colors.HexColor("#2377B9"), colors.HexColor("#E58D37")]
+    datos = []
+    for fila in filas[:8]:
+        etiqueta = " / ".join(str(fila[i]) for i in ((0, 1) if clave == "movimientos" else (0,)))
+        if clave == "disponibilidad":
+            etiqueta = str(fila[0]) + " / " + str(fila[1])
+        numeros = [max(0, float(fila[i] or 0)) for i in series]
+        datos.append((etiqueta[:35], numeros))
+    maximo = max((max(numeros) for _, numeros in datos), default=0) or 1
+    ancho, alto_fila = 755, 42 if len(series) > 1 else 31
+    alto = len(datos) * alto_fila + 55
+    dibujo = Drawing(ancho, alto)
+    dibujo.add(String(4, alto - 13, "Resumen gráfico (hasta 8 categorías)", fontSize=11,
+                      fillColor=colors.HexColor("#153D63")))
+    for i, columna in enumerate(series):
+        dibujo.add(Rect(230 + i * 175, alto - 35, 10, 10, fillColor=colores[i],
+                         strokeColor=None))
+        dibujo.add(String(244 + i * 175, alto - 33, str(encabezados[columna]),
+                           fontSize=9))
+    max_ancho = 440
+    for i, (etiqueta, numeros) in enumerate(datos):
+        y = alto - 62 - i * alto_fila
+        dibujo.add(String(4, y + 3, etiqueta, fontSize=8))
+        for j, numero in enumerate(numeros):
+            bajo = y - j * 15
+            largo = (numero / maximo) * max_ancho
+            dibujo.add(Rect(245, bajo, largo, 12, fillColor=colores[j], strokeColor=None))
+            dibujo.add(String(min(695, 250 + largo), bajo + 2, f"{numero:g}",
+                              fontSize=8))
+        dibujo.add(Line(240, y - 17 if len(series) > 1 else y - 4, 750,
+                         y - 17 if len(series) > 1 else y - 4,
+                         strokeColor=colors.HexColor("#E9EDF2"), strokeWidth=0.4))
+    return dibujo
 
 
 def generar_reporte(clave):
@@ -65,6 +112,10 @@ def generar_reporte(clave):
         ("TOPPADDING", (0, 0), (-1, -1), 8),
         ("LINEBELOW", (0, 0), (-1, 0), 0.8, colors.HexColor("#16436D")),
     ]))
+    grafico = crear_grafico(clave, encabezados, filas)
+    if grafico is not None:
+        elementos.append(grafico)
+        elementos.append(Spacer(1, 0.3 * cm))
     elementos.append(tabla)
     documento.build(elementos)
     return archivo

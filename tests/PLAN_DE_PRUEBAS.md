@@ -47,7 +47,7 @@ solo porque haya aprobado GitHub Actions.
 
 ### 4. Catálogo y ejemplares
 
-- [ ] Crear «Libro de prueba DAO», ISBN de prueba `9780000000001`, autor y
+- [ ] Crear «Libro de prueba DAO», ISBN de prueba `9780000000002`, autor y
       editorial ficticios; intentar repetir el ISBN y comprobar el rechazo.
       Si ese ISBN ya existe, usar otro de prueba que no esté registrado.
 - [ ] Crear ejemplar físico con código `ETAPA1-EJ-01` y sede activa 9001.
