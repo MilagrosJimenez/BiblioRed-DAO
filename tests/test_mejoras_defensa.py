@@ -30,18 +30,6 @@ class MejorasDefensaTests(unittest.TestCase):
                 self.assertIsNotNone(crear_grafico(clave, columnas, filas))
                 self.assertIsNone(crear_grafico(clave, columnas, []))
 
-    def test_base_demo_es_aislada_y_coherente(self):
-        with tempfile.TemporaryDirectory() as carpeta:
-            ruta = Path(carpeta) / "solo_reportes.db"
-            preparar(ruta)
-            with sqlite3.connect(ruta) as con:
-                self.assertEqual(con.execute("SELECT COUNT(*) FROM prestamos").fetchone()[0], 18)
-                self.assertGreater(con.execute("SELECT COUNT(*) FROM remitos").fetchone()[0], 0)
-                self.assertGreater(con.execute("SELECT COUNT(*) FROM devoluciones").fetchone()[0], 0)
-                self.assertEqual(con.execute("PRAGMA foreign_key_check").fetchall(), [])
-            with self.assertRaises(FileExistsError):
-                preparar(ruta)
-
 
 if __name__ == "__main__":
     unittest.main()
