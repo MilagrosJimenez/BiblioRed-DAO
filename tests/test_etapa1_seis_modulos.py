@@ -57,7 +57,7 @@ class PruebasEtapaUno(unittest.TestCase):
         self.servicio_prestamos = PrestamosServicio()
         self.servicio_remitos = RemitosServicio()
         self.servicio_catalogo.registrar_libro(
-            "9780000000001", "Libro de prueba DAO",
+            "9780000000002", "Libro de prueba DAO",
             "Autora Prueba", "Editorial Prueba"
         )
 
@@ -125,7 +125,7 @@ class PruebasEtapaUno(unittest.TestCase):
     def test_catalogo_isbn_y_codigo_unicos(self):
         with self.assertRaisesRegex(ValueError, "ISBN"):
             self.servicio_catalogo.registrar_libro(
-                "9780000000001", "Duplicado", "Autora", "Editorial"
+                "9780000000002", "Duplicado", "Autora", "Editorial"
             )
         self.crear_copia()
         with self.assertRaisesRegex(ValueError, "código"):
