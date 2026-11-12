@@ -1,121 +1,261 @@
-"""Generación de los cuatro reportes no triviales en PDF con ReportLab."""
+"""Informes PDF de BiblioRed: tablas legibles y gráficos basados en datos reales."""
 import os
 from datetime import datetime
+
+from reportlab.graphics.shapes import Drawing, Rect, String
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
-from reportlab.graphics.shapes import Drawing, Rect, String, Line
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, LongTable, TableStyle
-)
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 
 from servicios.consultas_bibliored_servicio import ConsultasBiblioredServicio
 
+AZUL = colors.HexColor("#153D63")
+TURQUESA = colors.HexColor("#167DA7")
+NARANJA = colors.HexColor("#E99746")
+TEXTO = colors.HexColor("#23364B")
+GRIS = colors.HexColor("#687B8D")
+FONDO = colors.HexColor("#F0F5FA")
+LINEA = colors.HexColor("#DCE5EE")
+BLANCO = colors.white
+ANCHO_PAGINA, ALTO_PAGINA = landscape(A4)
+MARGEN = 1.25 * cm
+ANCHO_CONTENIDO = ANCHO_PAGINA - 2 * MARGEN
+
+ESTILOS = {
+    "marca": ParagraphStyle("MarcaBiblioRed", fontName="Helvetica-Bold", fontSize=10,
+                              leading=13, textColor=AZUL),
+    "titulo": ParagraphStyle("TituloBiblioRed", fontName="Helvetica-Bold", fontSize=20,
+                               leading=24, textColor=AZUL, spaceAfter=3),
+    "subtitulo": ParagraphStyle("SubtituloBiblioRed", fontName="Helvetica", fontSize=9,
+                                  leading=12, textColor=GRIS),
+    "seccion": ParagraphStyle("SeccionBiblioRed", fontName="Helvetica-Bold", fontSize=10,
+                                leading=13, textColor=AZUL, spaceAfter=7),
+    "etiqueta": ParagraphStyle("EtiquetaBiblioRed", fontName="Helvetica", fontSize=8,
+                                 leading=10, textColor=GRIS),
+    "numero": ParagraphStyle("NumeroBiblioRed", fontName="Helvetica-Bold", fontSize=18,
+                               leading=21, textColor=AZUL),
+    "celda": ParagraphStyle("CeldaBiblioRed", fontName="Helvetica", fontSize=8.4,
+                              leading=11, textColor=TEXTO, wordWrap="CJK"),
+    "cabecera": ParagraphStyle("CabeceraBiblioRed", fontName="Helvetica-Bold", fontSize=8.3,
+                                 leading=11, textColor=BLANCO),
+    "aviso": ParagraphStyle("AvisoBiblioRed", fontName="Helvetica", fontSize=9,
+                              leading=13, textColor=AZUL),
+}
+
+
+def _texto(valor):
+    from xml.sax.saxutils import escape
+    return escape("" if valor is None else str(valor))
+
+
+def _resumen(clave, filas):
+    if clave == "prestamos":
+        return (("Sedes incluidas", len(filas)),
+                ("Préstamos activos", sum(int(f[1] or 0) for f in filas)),
+                ("Préstamos vencidos", sum(int(f[2] or 0) for f in filas)))
+    if clave == "solicitados":
+        return (("Títulos solicitados", len(filas)),
+                ("Solicitudes registradas", sum(int(f[2] or 0) for f in filas)),
+                ("Más solicitado", max((int(f[2] or 0) for f in filas), default=0)))
+    if clave == "disponibilidad":
+        return (("Sede / título", len(filas)),
+                ("Ejemplares", sum(int(f[2] or 0) for f in filas)),
+                ("Ejemplares libres", sum(int(f[3] or 0) for f in filas)))
+    if clave == "movimientos":
+        return (("Rutas de traslado", len(filas)),
+                ("Envíos registrados", sum(int(f[2] or 0) for f in filas)),
+                ("Envíos recibidos", sum(int(f[3] or 0) for f in filas)))
+    raise ValueError("Reporte desconocido")
+
+
+def _datos_grafico(clave, filas):
+    resultado = []
+    for f in filas:
+        if clave == "prestamos":
+            total = max(0, int(f[1] or 0))
+            segundo = min(total, max(0, int(f[2] or 0)))
+            valores = (total - segundo, segundo)
+            nombre = str(f[0])
+            leyenda = ("En plazo", "Vencidos")
+        elif clave == "solicitados":
+            total = max(0, int(f[2] or 0))
+            valores = (total, 0)
+            nombre = str(f[0])
+            leyenda = ("Solicitudes", "")
+        elif clave == "disponibilidad":
+            total = max(0, int(f[2] or 0))
+            libre = min(total, max(0, int(f[3] or 0)))
+            valores = (libre, total - libre)
+            nombre = str(f[0]) + " / " + str(f[1])
+            leyenda = ("Libres", "No libres")
+        elif clave == "movimientos":
+            total = max(0, int(f[2] or 0))
+            recibidos = min(total, max(0, int(f[3] or 0)))
+            valores = (recibidos, total - recibidos)
+            nombre = str(f[0]) + " / " + str(f[1])
+            leyenda = ("Recibidos", "Sin recibir")
+        else:
+            raise ValueError("Reporte desconocido")
+        resultado.append((nombre, valores, total))
+    return leyenda, resultado
 
 
 def crear_grafico(clave, encabezados, filas):
-    """Gráfico horizontal con las primeras ocho filas del reporte."""
+    """Gráfico de hasta cinco categorías; no dibujar barras sin valores."""
     if not filas:
         return None
-    series = {
-        "prestamos": (1, 2),
-        "solicitados": (2,),
-        "disponibilidad": (2, 3),
-        "movimientos": (2, 3),
-    }[clave]
-    colores = [colors.HexColor("#2377B9"), colors.HexColor("#E58D37")]
-    datos = []
-    for fila in filas[:8]:
-        etiqueta = " / ".join(str(fila[i]) for i in ((0, 1) if clave == "movimientos" else (0,)))
-        if clave == "disponibilidad":
-            etiqueta = str(fila[0]) + " / " + str(fila[1])
-        numeros = [max(0, float(fila[i] or 0)) for i in series]
-        datos.append((etiqueta[:35], numeros))
-    maximo = max((max(numeros) for _, numeros in datos), default=0) or 1
-    ancho, alto_fila = 755, 42 if len(series) > 1 else 31
-    alto = len(datos) * alto_fila + 55
+    leyenda, datos = _datos_grafico(clave, filas)
+    datos = sorted(datos, key=lambda d: d[2], reverse=True)[:5]
+    maximo = max((d[2] for d in datos), default=0)
+    if maximo <= 0:
+        return None
+    ancho = ANCHO_CONTENIDO
+    alto = 36 + len(datos) * 23
     dibujo = Drawing(ancho, alto)
-    dibujo.add(String(4, alto - 13, "Resumen gráfico (hasta 8 categorías)", fontSize=11,
-                      fillColor=colors.HexColor("#153D63")))
-    for i, columna in enumerate(series):
-        dibujo.add(Rect(230 + i * 175, alto - 35, 10, 10, fillColor=colores[i],
-                         strokeColor=None))
-        dibujo.add(String(244 + i * 175, alto - 33, str(encabezados[columna]),
-                           fontSize=9))
-    max_ancho = 440
-    for i, (etiqueta, numeros) in enumerate(datos):
-        y = alto - 62 - i * alto_fila
-        dibujo.add(String(4, y + 3, etiqueta, fontSize=8))
-        for j, numero in enumerate(numeros):
-            bajo = y - j * 15
-            largo = (numero / maximo) * max_ancho
-            dibujo.add(Rect(245, bajo, largo, 12, fillColor=colores[j], strokeColor=None))
-            dibujo.add(String(min(695, 250 + largo), bajo + 2, f"{numero:g}",
-                              fontSize=8))
-        dibujo.add(Line(240, y - 17 if len(series) > 1 else y - 4, 750,
-                         y - 17 if len(series) > 1 else y - 4,
-                         strokeColor=colors.HexColor("#E9EDF2"), strokeWidth=0.4))
+    dibujo.add(String(0, alto - 12, "Distribución (5 categorías con mayor valor)",
+                       fontName="Helvetica-Bold", fontSize=10, fillColor=AZUL))
+    dibujo.add(Rect(0, alto - 30, 9, 9, fillColor=TURQUESA, strokeColor=None))
+    dibujo.add(String(14, alto - 28, leyenda[0], fontSize=8, fillColor=TEXTO))
+    if leyenda[1]:
+        dibujo.add(Rect(105, alto - 30, 9, 9, fillColor=NARANJA, strokeColor=None))
+        dibujo.add(String(119, alto - 28, leyenda[1], fontSize=8, fillColor=TEXTO))
+    inicio = 240
+    ancho_barra = ancho - inicio - 45
+    for i, (nombre, valores, total) in enumerate(datos):
+        y = alto - 49 - i * 23
+        etiqueta = nombre if len(nombre) <= 39 else nombre[:36] + "..."
+        dibujo.add(String(0, y + 4, etiqueta, fontSize=8, fillColor=TEXTO))
+        dibujo.add(Rect(inicio, y, ancho_barra, 12, fillColor=FONDO, strokeColor=None))
+        acum = inicio
+        for valor, color in zip(valores, (TURQUESA, NARANJA)):
+            segmento = valor / maximo * ancho_barra
+            if segmento > 0:
+                dibujo.add(Rect(acum, y, segmento, 12, fillColor=color, strokeColor=None))
+                acum += segmento
+        dibujo.add(String(inicio + ancho_barra + 7, y + 3, str(total),
+                           fontName="Helvetica-Bold", fontSize=8, fillColor=AZUL))
     return dibujo
+
+
+def _tarjetas(clave, filas):
+    internos = []
+    for etiqueta, valor in _resumen(clave, filas):
+        t = Table([[Paragraph(_texto(etiqueta), ESTILOS["etiqueta"])],
+                   [Paragraph(_texto(valor), ESTILOS["numero"])]],
+                  colWidths=[ANCHO_CONTENIDO / 3 - 25])
+        t.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 2),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+            ("TOPPADDING", (0, 0), (-1, -1), 2),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+        ]))
+        internos.append(t)
+    tabla = Table([internos], colWidths=[ANCHO_CONTENIDO / 3] * 3, rowHeights=[55])
+    tabla.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), FONDO),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 12),
+        ("LINEBEFORE", (1, 0), (-1, -1), 1, BLANCO),
+    ]))
+    return tabla
+
+
+def _anchos(clave):
+    proporciones = {
+        "prestamos": (0.42, 0.19, 0.19, 0.20),
+        "solicitados": (0.54, 0.26, 0.20),
+        "disponibilidad": (0.23, 0.38, 0.13, 0.13, 0.13),
+        "movimientos": (0.27, 0.27, 0.15, 0.15, 0.16),
+    }[clave]
+    return [ANCHO_CONTENIDO * x for x in proporciones]
+
+
+def _tabla(clave, encabezados, filas):
+    tabla_datos = [[Paragraph(_texto(c), ESTILOS["cabecera"]) for c in encabezados]]
+    for fila in filas:
+        tabla_datos.append([Paragraph(_texto(v if v is not None else "—"),
+                                       ESTILOS["celda"]) for v in fila])
+    if not filas:
+        tabla_datos.append([Paragraph("No hay registros para mostrar", ESTILOS["celda"])]
+                            + [""] * (len(encabezados) - 1))
+    tabla = Table(tabla_datos, colWidths=_anchos(clave), repeatRows=1, hAlign="LEFT")
+    tabla.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), AZUL),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [BLANCO, FONDO]),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, 0), 10),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
+        ("TOPPADDING", (0, 1), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 1), (-1, -1), 7),
+        ("LEFTPADDING", (0, 0), (-1, -1), 10),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        ("LINEBELOW", (0, -1), (-1, -1), 0.7, LINEA),
+    ]))
+    return tabla
+
+
+def _pie(canvas, doc):
+    canvas.setStrokeColor(LINEA)
+    canvas.setLineWidth(0.6)
+    canvas.line(MARGEN, 27, ANCHO_PAGINA - MARGEN, 27)
+    canvas.setFillColor(GRIS)
+    canvas.setFont("Helvetica", 8)
+    canvas.drawString(MARGEN, 15, "BiblioRed | Desarrollo de Aplicaciones con Objetos | Grupo 73")
+    canvas.drawRightString(ANCHO_PAGINA - MARGEN, 15, f"Página {doc.page}")
+
+
+def construir_pdf(clave, titulo, encabezados, filas, archivo):
+    """Diseño independiente de SQLite para verificar sin modificar datos."""
+    documento = SimpleDocTemplate(
+        str(archivo), pagesize=landscape(A4),
+        leftMargin=MARGEN, rightMargin=MARGEN,
+        topMargin=0.95 * cm, bottomMargin=1.25 * cm,
+        title=f"BiblioRed - {titulo}", author="BiblioRed | UTN FRC - Grupo 73",
+    )
+    ahora = datetime.now()
+    elementos = [
+        Paragraph("BIBLIORED  /  UTN FRC  /  GRUPO 73", ESTILOS["marca"]),
+        Spacer(1, 9),
+        Paragraph(_texto(titulo), ESTILOS["titulo"]),
+        Paragraph(f"Informe generado el {ahora:%d/%m/%Y a las %H:%M}  ·  "
+                  f"{len(filas)} filas de resultados", ESTILOS["subtitulo"]),
+        Spacer(1, 17),
+        _tarjetas(clave, filas),
+        Spacer(1, 14),
+    ]
+    grafico = crear_grafico(clave, encabezados, filas)
+    if grafico is None:
+        aviso = ("No hay valores positivos para graficar con los registros actuales. "
+                 "El informe conserva el detalle real de la base de datos; "
+                 "no se crean préstamos ni valores ficticios.")
+        t = Table([[Paragraph(_texto(aviso), ESTILOS["aviso"])]],
+                  colWidths=[ANCHO_CONTENIDO])
+        t.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), FONDO),
+            ("LEFTPADDING", (0, 0), (-1, -1), 13),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 13),
+            ("TOPPADDING", (0, 0), (-1, -1), 11),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 11),
+        ]))
+        elementos += [t, Spacer(1, 15)]
+    else:
+        elementos += [grafico, Spacer(1, 13)]
+    elementos += [
+        Paragraph("DETALLE DEL REPORTE", ESTILOS["seccion"]),
+        _tabla(clave, encabezados, filas),
+    ]
+    documento.build(elementos, onFirstPage=_pie, onLaterPages=_pie)
+    return str(archivo)
 
 
 def generar_reporte(clave):
     titulo, encabezados, filas = ConsultasBiblioredServicio().reporte(clave)
-
     destino = os.path.abspath(os.path.join(
         os.path.dirname(__file__), "..", "reportes_generados"
     ))
     os.makedirs(destino, exist_ok=True)
     archivo = os.path.join(destino, f"{clave}_{datetime.now():%Y%m%d_%H%M%S}.pdf")
-
-    estilos = getSampleStyleSheet()
-    documento = SimpleDocTemplate(
-        archivo, pagesize=landscape(A4),
-        leftMargin=1.3 * cm, rightMargin=1.3 * cm,
-        topMargin=1.5 * cm, bottomMargin=1.5 * cm
-    )
-    elementos = [
-        Paragraph("BiblioRed | UTN FRC - Grupo 73", estilos["Heading2"]),
-        Paragraph(titulo, estilos["Title"]),
-        Paragraph(
-            f"Generado el {datetime.now():%d/%m/%Y %H:%M} | "
-            f"Registros: {len(filas)}", estilos["Normal"]
-        ),
-        Spacer(1, 0.5 * cm)
-    ]
-
-    estilo_celda = estilos["BodyText"]
-    estilo_celda.fontSize = 8
-    estilo_celda.leading = 10
-
-    def celda(valor):
-        if valor is None:
-            valor = "Sin recepciones"
-        import html
-        return Paragraph(html.escape(str(valor)), estilo_celda)
-
-    tabla_datos = [[celda(col) for col in encabezados]]
-    tabla_datos += [[celda(v) for v in fila] for fila in filas]
-    if not filas:
-        tabla_datos.append([celda("Sin registros")] + [celda("")] * (len(encabezados)-1))
-
-    ancho = landscape(A4)[0] - 2.6 * cm
-    tabla = LongTable(
-        tabla_datos, colWidths=[ancho / len(encabezados)] * len(encabezados),
-        repeatRows=1, hAlign="LEFT"
-    )
-    tabla.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#D8ECFA")),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F1F7FC")]),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-        ("TOPPADDING", (0, 0), (-1, -1), 8),
-        ("LINEBELOW", (0, 0), (-1, 0), 0.8, colors.HexColor("#16436D")),
-    ]))
-    grafico = crear_grafico(clave, encabezados, filas)
-    if grafico is not None:
-        elementos.append(grafico)
-        elementos.append(Spacer(1, 0.3 * cm))
-    elementos.append(tabla)
-    documento.build(elementos)
-    return archivo
+    return construir_pdf(clave, titulo, encabezados, filas, archivo)
